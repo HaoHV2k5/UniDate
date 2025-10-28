@@ -1,7 +1,5 @@
 package com.microsoft.hsf302_project.config;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,19 +33,19 @@ public class SecurityConfig {
     private String secretKey;
 
     private static final String[] WHITE_LIST = {
-            // Auth APIs for this project
+            // Auth APIs
             "/users/register",
             "/users/verify-otp",
             "/users/resend-otp",
 
-            // Swipes (để test nhanh có thể mở)
+            // Swipes (tạm mở để test)
             "/swipes/**",
 
             // Swagger/OpenAPI
             "/swagger-ui/**",
             "/v3/api-docs/**",
 
-            // other public endpoints (nếu cần)
+            // Public endpoints khác (nếu cần)
             "/api/payment/vnpay-return",
             "/api/payment/create",
             "/api/payment/payment-return",
@@ -70,25 +68,22 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req -> req
                         .requestMatchers(WHITE_LIST).permitAll()
                         .requestMatchers(HttpMethod.GET, "/products").permitAll()
-                        // Trong giai đoạn test, mở hết các request còn lại
+                        // Giai đoạn test: cho phép các request còn lại
                         .anyRequest().permitAll()
                 )
-                // Nếu CHƯA dùng JWT, để comment phần resource server lại.
-                // Khi bắt đầu phát hành JWT cho FE thì bỏ comment khối dưới:
-                /*
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
+                // Bật Resource Server JWT (không chặn vì rule ở trên đã permitAll)
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt -> jwt
                                 .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
                 )
-                */
                 .cors(c -> c.configurationSource(corsConfigurationSource()));
 
         return http.build();
     }
 
-    // === (Chỉ dùng khi bật Resource Server JWT) ===
+    // ==== JWT converter/decoder ====
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter conv = new JwtGrantedAuthoritiesConverter();
         conv.setAuthorityPrefix(""); // không thêm "ROLE_"
@@ -103,12 +98,11 @@ public class SecurityConfig {
                 .macAlgorithm(MacAlgorithm.HS512)
                 .build();
     }
-    // ===============================================
+    // ================================
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        // Dùng patterns để cho phép wildcard domain
         cfg.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
