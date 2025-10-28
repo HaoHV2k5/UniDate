@@ -11,29 +11,24 @@ import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.mapper.UserMapper;
-import com.microsoft.hsf302_project.repo.UserRepository;
+import com.microsoft.hsf302_project.repo.UserRepo;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
-    private final UserRepository userRepository;
+    private final UserRepo userRepository;
 
     private final JwtService jwtService;
     private final UserMapper userMapper;
