@@ -6,10 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
+@Builder
 @NoArgsConstructor
-public class UserDetailResponse {
+@AllArgsConstructor
+public class UserResponse {
     private String username;
-    private String password;
+    private String fullName;
     private String role;
 }
