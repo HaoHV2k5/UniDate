@@ -1,0 +1,6 @@
+.idea/
+*.iml
+BE/target/
+FE/node_modules/
+FE/dist/
+FE/build/
