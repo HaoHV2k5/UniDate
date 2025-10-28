@@ -1,6 +1,7 @@
 package com.microsoft.hsf302_project.exception;
 
-import com.example.backend.dto.response.ApiResponse;
+
+import com.microsoft.hsf302_project.dto.response.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
