@@ -1,19 +1,19 @@
 package com.microsoft.hsf302_project.service;
 
-import com.microsoft.hsf302_project.dto.request.RegisterRequest;
-import com.microsoft.hsf302_project.dto.request.LoginRequest;
 import com.microsoft.hsf302_project.dto.request.IntrospectRequest;
+import com.microsoft.hsf302_project.dto.request.LoginRequest;
 import com.microsoft.hsf302_project.dto.request.RefreshRequest;
-import com.microsoft.hsf302_project.dto.response.LoginResponse;
+import com.microsoft.hsf302_project.dto.request.RegisterRequest;
 import com.microsoft.hsf302_project.dto.response.IntrospectResponse;
+import com.microsoft.hsf302_project.dto.response.LoginResponse;
 import com.microsoft.hsf302_project.dto.response.RefreshResponse;
 import com.nimbusds.jose.JOSEException;
 
 import java.text.ParseException;
 
 /**
- * Hợp nhất cả 2 nhóm: đăng ký + OTP và login/JWT.
- * Giữ AuthService là interface để tương thích với cấu trúc hiện tại (đã có AuthServiceImpl).
+ * Hợp nhất 2 nhóm: đăng ký + OTP và login/JWT.
+ * Giữ AuthService là interface để tương thích với AuthServiceImpl.
  */
 public interface AuthService {
 

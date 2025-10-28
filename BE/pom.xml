@@ -82,13 +82,20 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <!-- Cloudinary (từ master) -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.39.0</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Nếu cần spring-security-test cho unit test, có thể mở ra:
+        <!-- Nếu cần spring-security-test cho unit test, có thể mở:
         <dependency>
           <groupId>org.springframework.security</groupId>
           <artifactId>spring-security-test</artifactId>
@@ -117,7 +124,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <!-- dùng version do BOM quản lý; có thể set cố định nếu muốn -->
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
