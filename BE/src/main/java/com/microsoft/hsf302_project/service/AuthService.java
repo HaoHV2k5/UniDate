@@ -32,7 +32,7 @@ public class AuthService {
 
     private final JwtService jwtService;
     private final UserMapper userMapper;
-    private final UserService userService;
+
 
 
     public LoginResponse login(LoginRequest loginRequest) {
@@ -53,7 +53,7 @@ public class AuthService {
                 .authenticated(true)
                 .accessToken(token)
                 .refreshToken(refreshToken)
-                .user(userMapper.toUserDetailResponse(user))
+                .user(userMapper.toUserResponse(user))
                 .build();
     }
 
