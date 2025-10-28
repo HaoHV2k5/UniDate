@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, Upload } from "lucide-react";
 import { toast } from "sonner";
+
+// Interface cho cánh hoa anh đào
+interface CherryBlossom {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+  opacity: number;
+  speedX: number;
+  speedY: number;
+}
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,9 +31,93 @@ const Register = () => {
     avatar: null as File | null,
   });
 
+  // State cho các cánh hoa anh đào
+  const [blossoms, setBlossoms] = useState<CherryBlossom[]>([]);
+
+  // Tạo cánh hoa mới
+  const createBlossom = (): CherryBlossom => {
+    const rand = Math.random();
+
+    let x: number;
+    let y: number;
+
+    // 70% hoa xuất hiện ở khu vực góc phải (3/4 phải màn hình, phần trên)
+    if (rand < 0.7) {
+      x = 60 + Math.random() * 80;
+      y = Math.random() * -30;
+    }
+    // 30% còn lại rải rác nhẹ ở vùng trên giữa
+    else {
+      x = 25 + Math.random() * 25;   // giữa đến phải giữa
+      y = Math.random() * -20;
+    }
+
+    return {
+      id: Date.now() + Math.random(),
+      x,
+      y,
+      size: Math.random() * 10 + 14,
+      rotation: Math.random() * 360,
+      opacity: Math.random() * 0.3 + 0.6,
+      speedX: Math.random() * 0.12 + 0.03,
+      speedY: Math.random() * 0.12 + 0.08,
+    };
+  };
+  // Khởi tạo cánh hoa ban đầu
+  useEffect(() => {
+    const initialBlossoms = Array.from({ length: 6 }, createBlossom); // Giảm số lượng
+    setBlossoms(initialBlossoms);
+  }, []);
+
+  // Animation với requestAnimationFrame
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const updateBlossoms = () => {
+      setBlossoms(prevBlossoms =>
+        prevBlossoms.map(blossom => {
+          let newX = blossom.x - blossom.speedX; // Di chuyển sang trái
+          let newY = blossom.y + blossom.speedY; // Di chuyển xuống dưới
+          let newRotation = blossom.rotation + 0.3; // Xoay rất chậm
+
+          // Nếu hoa ra khỏi màn hình, tạo lại ở bên phải
+          if (newY > 100 || newX < -10) {
+            return createBlossom();
+          }
+
+          return {
+            ...blossom,
+            x: newX,
+            y: newY,
+            rotation: newRotation,
+          };
+        })
+      );
+
+      animationFrameId = requestAnimationFrame(updateBlossoms);
+    };
+
+    animationFrameId = requestAnimationFrame(updateBlossoms);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  // Thêm cánh hoa mới mỗi 3 giây (chậm hơn)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (blossoms.length < 40) { // Giới hạn tổng số hoa
+        setBlossoms(prev => [...prev, createBlossom()]);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [blossoms.length]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.name || !formData.email || !formData.password || !formData.major || !formData.year) {
       toast.error("Vui lòng điền đầy đủ thông tin");
@@ -46,8 +142,30 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4">
-      <Card className="w-full max-w-xl shadow-hover">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4 relative overflow-hidden">
+      {/* Các cánh hoa anh đào */}
+      {blossoms.map((blossom) => (
+        <div
+          key={blossom.id}
+          className="absolute pointer-events-none"
+          style={{
+            left: `${blossom.x}%`,
+            top: `${blossom.y}%`,
+            fontSize: `${blossom.size}px`,
+            opacity: blossom.opacity,
+            transform: `rotate(${blossom.rotation}deg)`,
+            zIndex: 10,
+            transition: 'transform 0.2s linear, opacity 0.2s linear',
+            color: `hsl(330, 70%, 75%)`,
+            willChange: 'transform, opacity', // Tối ưu hiệu suất
+          }}
+        >
+          {Math.random() > 0.5 ? '🌸' : '💮'}
+        </div>
+      ))}
+
+      {/* Form đăng ký */}
+      <Card className="w-full max-w-xl shadow-hover relative z-20">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-full bg-gradient-primary">
