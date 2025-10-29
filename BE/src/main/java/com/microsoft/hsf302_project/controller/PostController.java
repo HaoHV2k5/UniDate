@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
     private final PostService postService;
     private final UserService userService;
-
+// tạo bài đăng
     @PostMapping
     public ApiResponse<PostResponse> createPost(Authentication authentication, @RequestBody PostRequest postRequest) {
         String usrName = authentication.name();
@@ -30,5 +30,17 @@ public class PostController {
                 .build();
 
     }
+
+    // update bài đăng
+    // xóa bài đăng
+
+    // lấy tất cả bài đăng của 1 user cụ thể
+
+    // lấy bài đăng trên homepage
+
+
+    // api giúp cho người dùng khi nhấn vào 1 avatar hay tên của người dùng khác
+    // thì sẽ đc chuyển qua trang homepage của họ
+    
 
 }
