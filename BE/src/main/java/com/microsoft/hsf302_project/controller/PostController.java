@@ -10,6 +10,7 @@ import com.microsoft.hsf302_project.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,6 +55,21 @@ public class PostController {
 
     // lấy tất cả bài đăng của 1 user cụ thể
     // get dựa vào usr id
+    // chỉ lấy nếu nó là visible và public
+    @GetMapping("/user/{id}")
+    public ApiResponse<Page<PostResponse>> getPostByUser( @PathVariable Long userId,
+                                                            @RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "10") int size) {
+
+        Page<PostResponse> list = postService.getPostByUserId(userId,page,size);
+        return ApiResponse.<Page<PostResponse>>builder()
+                .data(list)
+                .message("lấy danh sách tất cả bài đăng public của user thành công")
+                .build();
+    }
+
+
+
 
     // lấy bài đăng trên homepage
     @GetMapping
@@ -70,12 +86,30 @@ public class PostController {
 
     // api giúp cho người dùng khi nhấn vào 1 avatar hay tên của người dùng khác
     // thì sẽ đc chuyển qua trang homepage của họ
-    // đăng baài private
+
 
     // ẩn bài đăng
 
-    // chuyển public sang private
+    @PutMapping("/{id}/hidden")
+    public ApiResponse<PostResponse> hiddenPost(@Valid  Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        PostResponse post = postService.hiddenPost(username,id);
+        return  ApiResponse.<PostResponse>builder()
+                .message("đã hidden bài đăng thành công")
+                .data(post)
+                .build();
+    }
 
+    // chuyển public sang private
+    @PutMapping("/{id}/private")
+    public ApiResponse<PostResponse> privatePost(@Valid  Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        PostResponse post = postService.hiddenPost(username,id);
+        return  ApiResponse.<PostResponse>builder()
+                .message("đã hidden bài đăng thành công")
+                .data(post)
+                .build();
+    }
 
     // nếu đã match được với nhau thì có theer xem tin private và public
 

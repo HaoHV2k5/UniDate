@@ -22,4 +22,5 @@ public class PostRequest {
     @NotBlank(message = "CONTENT_NOT_BLANK")
     private String content;
     private List<MultipartFile> image;
+    private boolean isPrivate;
 }
