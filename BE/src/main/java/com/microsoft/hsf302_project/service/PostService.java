@@ -12,8 +12,10 @@ import com.microsoft.hsf302_project.mapper.PostMapper;
 import com.microsoft.hsf302_project.repo.PostRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +38,7 @@ private final UserRepo userRepo;
                 .title(request.getTitle())
                 .content(request.getContent())
                 .user(user)
+                .isPrivate(request.isPrivate())
                 .build();
 
         List<String> imgUrls = new ArrayList<>();
@@ -80,6 +83,32 @@ private final UserRepo userRepo;
         List<Post> list = postRepo.getPostHomePage(PostStatus.VISIBLE,false,lastId,pageable);
         List<PostResponse> postResponses = postMapper.toListPostResponse(list);
         return postResponses;
+    }
+
+    public PostResponse hiddenPost(String username, Long postId){
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        if(!post.getUser().getUsername().equals(username)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        post.setStatus(PostStatus.HIDDEN);
+        postRepo.save(post);
+        return postMapper.toPostResponse(post);
+    }
+
+    public PostResponse privatePost(String username, Long postId){
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        if(!post.getUser().getUsername().equals(username)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        post.setIsPrivate(true);
+        postRepo.save(post);
+        return postMapper.toPostResponse(post);
+    }
+
+    public Page<PostResponse> getPostByUserId(Long userId,int size, int page) {
+        Pageable pageable = PageRequest.of(page,size, Sort.by("id").descending());
+        Page<Post> pagePost = postRepo.findPublicVisiblePostsByUserId(userId,PostStatus.VISIBLE,pageable);
+        return pagePost.map(postMapper::toPostResponse);
     }
 
 
