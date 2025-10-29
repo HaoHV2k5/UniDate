@@ -4,8 +4,11 @@ import com.microsoft.hsf302_project.enums.Role;
 import lombok.Data;
 
 @Data
-public class UserUpdateRequest {
-    private String fullName;
+public class UserCreationRequest {
+    private String username;
     private String email;
+    private String phone;
+    private String fullName;
+    private String passwordHash;
     private Role role;
 }

@@ -13,7 +13,7 @@ import com.microsoft.hsf302_project.service.JwtService;
 import com.microsoft.hsf302_project.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -24,8 +24,7 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
-    private final JwtService jwtService;
-    private final UserService userService;
+
 
 
     @PostMapping("/login")
