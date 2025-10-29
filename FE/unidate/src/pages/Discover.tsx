@@ -1,189 +1,223 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MobileNav } from "@/components/MobileNav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, X, MapPin, Sparkles, Users, TrendingUp, Filter } from "lucide-react";
-import { mockUsers, User } from "@/data/mockData";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Post } from "@/data/mockPosts";
+import { fetchPosts } from "@/services/mockPostApi";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import api from "@/api/api";
 
 const Discover = () => {
-  const [users, setUsers] = useState(mockUsers);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedMajor, setSelectedMajor] = useState("all");
-  const [likedUsers, setLikedUsers] = useState<number[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const handleLike = (userId: number) => {
-    setLikedUsers([...likedUsers, userId]);
-    toast.success("Đã like! Chờ người đó like lại bạn để match 💕");
+  // Initial load
+  useEffect(() => {
+    loadInitialPosts();
+  }, []);
+
+  // Infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+    return () => observer.disconnect();
+  }, [hasMore, loading, posts]);
+
+  const loadInitialPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/post");
+      setPosts(res.data.data || []);
+    } catch (error) {
+      toast.error("Không thể tải bài viết");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDislike = (userId: number) => {
-    toast("Đã bỏ qua");
+  const loadMorePosts = async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const lastId = posts[posts.length - 1]?.id;
+      const res = await api.get("/api/post", {
+        params: { lastId, size: 10 },
+      });
+
+      const newPosts = res.data.data || [];
+      if (newPosts.length === 0) setHasMore(false);
+      else setPosts((prev) => [...prev, ...newPosts]);
+    } catch (error) {
+      toast.error("Không thể tải thêm bài viết");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.interests.some((i) => i.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesMajor = selectedMajor === "all" || user.major.includes(selectedMajor);
-    return matchesSearch && matchesMajor;
-  });
+  const handleLike = (postId: number) => {
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+            ...post,
+            isLiked: !post.isLiked,
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+          }
+          : post
+      )
+    );
+  };
 
-  const topMatches = filteredUsers.filter((u) => u.match_score >= 85);
-  const newUsers = filteredUsers.slice(0, 4);
-  const nearbyUsers = filteredUsers.filter((u) => u.distance_km < 2);
+  const handleComment = (postId: number) => {
+    toast("Tính năng bình luận đang phát triển");
+  };
 
-  const UserCard = ({ user }: { user: User }) => (
-    <Card className="group overflow-hidden hover-lift shadow-card transition-all duration-300">
-      <div className="relative aspect-video overflow-hidden bg-gradient-card">
-        <img
-          src={user.avatar}
-          alt={user.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute top-2 right-2 flex gap-1">
-          {user.match_score >= 85 && (
-            <Badge variant="gradient" className="shadow-sm">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Top Match
-            </Badge>
-          )}
-          {user.distance_km < 1 && (
-            <Badge variant="accent" className="shadow-sm">
-              Gần bạn
-            </Badge>
-          )}
-        </div>
-      </div>
-      
+  const handleShare = (postId: number) => {
+    toast("Đã sao chép link bài viết");
+  };
+
+  const PostCard = ({ post }: { post: Post }) => (
+    <Card className="shadow-card hover-lift transition-all">
       <CardContent className="p-4 space-y-3">
-        <div>
-          <h3 className="font-semibold text-lg line-clamp-1">{user.name}, {user.age}</h3>
-          <p className="text-sm text-muted-foreground">
-            {user.major} • Năm {user.year}
-          </p>
+        {/* Author info */}
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={post.author.avatar} alt={post.author.name} />
+            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h3 className="font-semibold text-sm">{post.author.name}</h3>
+            <p className="text-xs text-muted-foreground">
+              {post.author.major} • {post.timestamp}
+            </p>
+          </div>
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-          {user.bio}
-        </p>
+        {/* Content */}
+        <p className="text-sm leading-relaxed">{post.content}</p>
 
-        <div className="flex flex-wrap gap-1">
-          {user.interests.slice(0, 3).map((interest, idx) => (
-            <Badge key={idx} variant="soft" className="text-xs">
-              {interest}
-            </Badge>
-          ))}
+        {/* Image */}
+        {post.image && (
+          <div className="rounded-lg overflow-hidden -mx-4">
+            <img
+              src={post.image}
+              alt="Post image"
+              className="w-full object-cover max-h-[400px]"
+            />
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
+          <span>{post.likes} lượt thích</span>
+          <span>{post.comments} bình luận</span>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5" />
-          <span>{user.distance_km} km</span>
-          <span className="mx-1">•</span>
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span className="text-primary font-medium">{user.match_score}% match</span>
-        </div>
-
-        <div className="flex gap-2 pt-2">
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-2 border-t">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="flex-1"
-            onClick={() => handleDislike(user.id)}
+            className={`flex-1 ${post.isLiked ? "text-primary" : ""}`}
+            onClick={() => handleLike(post.id)}
           >
-            <X className="h-4 w-4 mr-1" />
-            Bỏ qua
+            <Heart className={`h-4 w-4 mr-2 ${post.isLiked ? "fill-current" : ""}`} />
+            Thích
           </Button>
           <Button
-            variant="default"
+            variant="ghost"
             size="sm"
             className="flex-1"
-            onClick={() => handleLike(user.id)}
+            onClick={() => handleComment(post.id)}
           >
-            <Heart className="h-4 w-4 mr-1" />
-            Like
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Bình luận
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1"
+            onClick={() => handleShare(post.id)}
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Chia sẻ
           </Button>
         </div>
       </CardContent>
     </Card>
   );
 
-  const Section = ({ icon: Icon, title, users }: { icon: any; title: string; users: User[] }) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Icon className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <Badge variant="secondary" className="ml-auto">
-          {users.length}
-        </Badge>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {users.map((user) => (
-          <UserCard key={user.id} user={user} />
-        ))}
-      </div>
-    </div>
+  const PostSkeleton = () => (
+    <Card className="shadow-card">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-48 w-full rounded-lg" />
+      </CardContent>
+    </Card>
   );
 
   return (
     <div className="min-h-screen bg-gradient-soft pb-20 md:pb-0">
       <Navbar />
-      
-      <main className="container px-4 py-8 space-y-8">
-        {/* Filters */}
-        <Card className="shadow-card">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Tìm theo tên, sở thích..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
+
+      <main className="container max-w-2xl px-4 py-8 space-y-4">
+        {/* Posts feed */}
+        {posts.length === 0 && loading ? (
+          // Initial loading
+          <>
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </>
+        ) : (
+          <>
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+
+            {/* Loading more */}
+            {loading && (
+              <div className="py-8 text-center">
+                <div className="inline-flex items-center gap-2 text-muted-foreground">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span>Đang tải...</span>
+                </div>
               </div>
-              
-              <Select value={selectedMajor} onValueChange={setSelectedMajor}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Ngành học" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả ngành</SelectItem>
-                  <SelectItem value="Công nghệ">Công nghệ thông tin</SelectItem>
-                  <SelectItem value="Kinh tế">Kinh tế</SelectItem>
-                  <SelectItem value="Điện tử">Điện tử</SelectItem>
-                  <SelectItem value="Ngôn ngữ">Ngôn ngữ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+            )}
 
-        {/* Sections */}
-        {topMatches.length > 0 && (
-          <Section icon={Sparkles} title="Gợi ý cho bạn" users={topMatches} />
-        )}
-        
-        {newUsers.length > 0 && (
-          <Section icon={Users} title="Mới tham gia" users={newUsers} />
-        )}
-        
-        {nearbyUsers.length > 0 && (
-          <Section icon={MapPin} title="Gần bạn" users={nearbyUsers} />
-        )}
+            {/* End of feed */}
+            {!hasMore && posts.length > 0 && (
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground">Hết bài rồi 💨</p>
+              </div>
+            )}
 
-        {filteredUsers.length === 0 && (
-          <Card className="shadow-card">
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                Không tìm thấy kết quả phù hợp. Thử điều chỉnh bộ lọc!
-              </p>
-            </CardContent>
-          </Card>
+            {/* Intersection observer target */}
+            <div ref={observerTarget} className="h-4" />
+          </>
         )}
       </main>
       <MobileNav />
