@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/post")
 @RequiredArgsConstructor
@@ -54,10 +56,31 @@ public class PostController {
     // get dựa vào usr id
 
     // lấy bài đăng trên homepage
-// get all post
+    @GetMapping
+    public ApiResponse<List<PostResponse>> getPostHomepage(@RequestParam(required = false) Long lastId,
+                                                      @RequestParam(defaultValue = "10") int size) {
+
+        List<PostResponse> list = postService.getPostHomePage(lastId, size);
+        return ApiResponse.<List<PostResponse>>builder()
+                .data(list)
+                .message("lấy danh sách tất cả bài đăng public thành công")
+                .build();
+    }
+
 
     // api giúp cho người dùng khi nhấn vào 1 avatar hay tên của người dùng khác
     // thì sẽ đc chuyển qua trang homepage của họ
-    
+    // đăng baài private
+
+    // ẩn bài đăng
+
+    // chuyển public sang private
+
+
+    // nếu đã match được với nhau thì có theer xem tin private và public
+
+
+
+
 
 }
