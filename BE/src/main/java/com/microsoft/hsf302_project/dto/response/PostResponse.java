@@ -17,7 +17,7 @@ public class PostResponse {
     private List<String> imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Long userId;
+    private UserResponse user;
     private Boolean isPrivate;
     private PostStatus status;
 

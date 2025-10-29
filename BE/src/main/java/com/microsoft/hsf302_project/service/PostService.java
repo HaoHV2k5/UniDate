@@ -1,6 +1,7 @@
 package com.microsoft.hsf302_project.service;
 
 import com.microsoft.hsf302_project.dto.request.PostRequest;
+import com.microsoft.hsf302_project.dto.request.PostUpdateRequest;
 import com.microsoft.hsf302_project.dto.response.PostResponse;
 import com.microsoft.hsf302_project.entity.Post;
 import com.microsoft.hsf302_project.entity.User;
@@ -46,6 +47,17 @@ private final UserRepo userRepo;
 
         return  postMapper.toPostResponse(post);
 
+    }
+    // update post
+    public PostResponse updatePost(PostUpdateRequest request, String usrname,Long postId) {
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        if (!post.getUser().getUsername().equals(usrname)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        postMapper.updatePost(request, post);
+        postRepo.save(post);
+
+        return  postMapper.toPostResponse(post);
     }
 
 

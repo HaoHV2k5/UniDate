@@ -77,7 +77,7 @@ public class SecurityConfig {
 //                                    System.out.println(" o trong security config Authentication: " + authentication);
 //                                    response.sendRedirect("/oauth2/success");
 //                                }))
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         ;
 
 
@@ -111,20 +111,6 @@ public class SecurityConfig {
         return source;
 
     }
-
-
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.addAllowedOriginPattern("*"); // ⚠️ Cho phép tất cả domain test
-//        configuration.addAllowedMethod("*");
-//        configuration.addAllowedHeader("*");
-//        configuration.setAllowCredentials(true);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
 
 
 
