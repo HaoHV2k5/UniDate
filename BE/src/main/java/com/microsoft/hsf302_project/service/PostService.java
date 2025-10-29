@@ -1,21 +1,30 @@
 package com.microsoft.hsf302_project.service;
 
 import com.microsoft.hsf302_project.dto.request.PostRequest;
+<<<<<<< HEAD
 import com.microsoft.hsf302_project.dto.request.PostUpdateRequest;
 import com.microsoft.hsf302_project.dto.response.PostResponse;
 import com.microsoft.hsf302_project.entity.Post;
 import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.enums.PostStatus;
+=======
+import com.microsoft.hsf302_project.dto.response.PostResponse;
+import com.microsoft.hsf302_project.entity.Post;
+import com.microsoft.hsf302_project.entity.User;
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.mapper.PostMapper;
 import com.microsoft.hsf302_project.repo.PostRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
+<<<<<<< HEAD
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+=======
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,7 +47,10 @@ private final UserRepo userRepo;
                 .title(request.getTitle())
                 .content(request.getContent())
                 .user(user)
+<<<<<<< HEAD
                 .isPrivate(request.isPrivate())
+=======
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
                 .build();
 
         List<String> imgUrls = new ArrayList<>();
@@ -54,6 +66,7 @@ private final UserRepo userRepo;
         return  postMapper.toPostResponse(post);
 
     }
+<<<<<<< HEAD
     // update post
     public PostResponse updatePost(PostUpdateRequest request, String usrname,Long postId) {
         Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
@@ -110,6 +123,8 @@ private final UserRepo userRepo;
         Page<Post> pagePost = postRepo.findPublicVisiblePostsByUserId(userId,PostStatus.VISIBLE,pageable);
         return pagePost.map(postMapper::toPostResponse);
     }
+=======
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
 
 
 }
