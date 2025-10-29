@@ -77,7 +77,7 @@ public class SecurityConfig {
 //                                    System.out.println(" o trong security config Authentication: " + authentication);
 //                                    response.sendRedirect("/oauth2/success");
 //                                }))
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         ;
 
 
