@@ -60,5 +60,14 @@ private final UserRepo userRepo;
         return  postMapper.toPostResponse(post);
     }
 
+    public void deletePost(String username, Long postId){
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        if(!post.getUser().getUsername().equals(username)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        postRepo.delete(post);
+
+    }
+
 
 }

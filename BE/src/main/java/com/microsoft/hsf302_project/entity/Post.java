@@ -18,10 +18,10 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 2048)
+    @Column(nullable = false,columnDefinition = "NVARCHAR(2048)")
     private String content;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false,columnDefinition = "NVARCHAR(50)")
     private String title;
 
     private List<String> imageUrl;
