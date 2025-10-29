@@ -43,11 +43,18 @@ public class PostController {
     }
     
     // xóa bài đăng
+    @DeleteMapping("/{id}/delete")
+    public ApiResponse<Void> deletePost(Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        postService.deletePost(username,id);
+        return ApiResponse.<Void>builder().message("Đã xóa bài đăng thành công").build();
+    }
 
     // lấy tất cả bài đăng của 1 user cụ thể
+    // get dựa vào usr id
 
     // lấy bài đăng trên homepage
-
+// get all post
 
     // api giúp cho người dùng khi nhấn vào 1 avatar hay tên của người dùng khác
     // thì sẽ đc chuyển qua trang homepage của họ
