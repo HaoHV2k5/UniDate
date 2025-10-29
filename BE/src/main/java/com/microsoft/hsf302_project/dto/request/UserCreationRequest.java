@@ -9,6 +9,10 @@ public class UserCreationRequest {
     private String email;
     private String phone;
     private String fullName;
+<<<<<<< HEAD
     private String password;
+=======
+    private String passwordHash;
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
     private Role role;
 }

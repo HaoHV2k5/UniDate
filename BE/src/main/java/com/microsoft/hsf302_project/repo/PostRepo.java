@@ -1,5 +1,6 @@
 package com.microsoft.hsf302_project.repo;
 
+<<<<<<< HEAD
 import com.microsoft.hsf302_project.dto.response.PostResponse;
 import com.microsoft.hsf302_project.entity.Post;
 import com.microsoft.hsf302_project.enums.PostStatus;
@@ -48,4 +49,12 @@ public interface PostRepo extends JpaRepository<Post,Long> {
             @Param("status") PostStatus status,
             Pageable pageable);
 
+=======
+import com.microsoft.hsf302_project.entity.Post;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PostRepo extends JpaRepository<Post,Long> {
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
 }

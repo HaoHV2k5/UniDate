@@ -100,7 +100,10 @@ public class UserController {
                 .build();
     }
 
+<<<<<<< HEAD
     // chỉnh trạng thái active của user
+=======
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
     // khóa user lại cua admin
     @PutMapping("/lock/{id}")
     public ApiResponse<String> lockUser(@PathVariable Long id) {

@@ -65,10 +65,14 @@ public class UserService {
     public UserResponse updatePassword(Long id, UserPasswordUpdateRequest request) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
+<<<<<<< HEAD
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+=======
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
         userRepo.save(user);
         return userMapper.toUserResponse(user);
     }
@@ -94,7 +98,11 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setFullName(request.getFullName());
+<<<<<<< HEAD
         user.setPassword(request.getPassword());
+=======
+        user.setPasswordHash(request.getPasswordHash());
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
         user.setRole(request.getRole() != null ? request.getRole() : Role.USER); // ✅ mặc định USER
         userRepo.save(user);
         return userMapper.toUserResponse(user);

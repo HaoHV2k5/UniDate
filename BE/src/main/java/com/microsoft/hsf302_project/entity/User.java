@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter
 @Setter
@@ -22,11 +24,25 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String username;
+<<<<<<< HEAD
 
     @Column(nullable = false)
     private String password;
 
     private String fullName;
+=======
+    private String passwordHash;
+    private String fullName;
+    private String email;
+    private String phone;
+    private Gender gender;
+    private LocalDate birthDate;
+    private String bio;
+    private String major;
+    private String university;
+    private Role role;
+    private boolean active;
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
 
     @Column(unique = true)
     private String email;

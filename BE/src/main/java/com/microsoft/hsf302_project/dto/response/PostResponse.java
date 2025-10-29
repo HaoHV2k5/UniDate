@@ -17,7 +17,11 @@ public class PostResponse {
     private List<String> imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+<<<<<<< HEAD
     private UserResponse user;
+=======
+    private Long userId;
+>>>>>>> 9724edb95802fb6cc307c80940bc061ec098dc84
     private Boolean isPrivate;
     private PostStatus status;
 
