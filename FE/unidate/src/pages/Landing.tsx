@@ -12,6 +12,7 @@ import avatar3 from "@/assets/avatar-3.jpg";
 import avatar4 from "@/assets/avatar-4.jpg";
 import logo from "@/assets/logo.png";
 
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"></link>
 const Landing = () => {
   const features = [
     {
@@ -92,11 +93,9 @@ const Landing = () => {
             to="/"
             className="flex items-center space-x-2 hover:scale-105 transition-transform duration-200"
           >
-            <img
-              src={logo}
-              alt="UniDate logo"
-              style={{ width: 100, height: 100 }}
-            />
+            <span className="text-3xl font-extrabold tracking-wide text-pink-500 drop-shadow-md">
+              Uni<span className="text-indigo-500">Date</span>
+            </span>
           </Link>
 
           <div className="flex items-center gap-3">
