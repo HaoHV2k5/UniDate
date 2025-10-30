@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class ResendOtpRequest {
-    @NotBlank(message = "USERNAME_NOT_BLANK")
+    @NotBlank(message = "EMAIL_NOT_BLANK")
     @Email(message = "EMAIL_INVALID")
-    private String username;
+    private String email;
 }

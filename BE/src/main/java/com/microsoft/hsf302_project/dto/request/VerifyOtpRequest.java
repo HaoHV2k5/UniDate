@@ -9,7 +9,7 @@ import lombok.Data;
 public class VerifyOtpRequest {
     @NotBlank(message = "USERNAME_NOT_BLANK")
     @Email(message = "EMAIL_INVALID")
-    private String username;
+    private String email;
 
     @NotBlank(message = "OTP_INVALID")
     @Size(min = 6, max = 6, message = "OTP_INVALID")

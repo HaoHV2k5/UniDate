@@ -12,6 +12,8 @@ import com.microsoft.hsf302_project.util.OtpUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @Service
 @RequiredArgsConstructor
@@ -20,16 +22,19 @@ public class RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
 
+    @Value("${app.dev-mode:true}")
+    private boolean devMode;
+
     public RegisterResponse register(RegisterRequest req) {
-        if (userRepo.existsByUsername(req.getUsername())) {
+        if (userRepo.existsByUsername(req.getEmail())) {
             throw new AppException(ErrorCode.ACCOUNT_EXISTED);
         }
         User user = User.builder()
-                .username(req.getUsername())
+                .username(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .fullName(req.getFullName())
                 .role("USER")
-                .verified(false) // user mới phải xác thực OTP
+                .verified(false)
                 .build();
         userRepo.save(user);
 
@@ -38,18 +43,18 @@ public class RegistrationService {
         return RegisterResponse.builder()
                 .usernameMasked(OtpUtils.maskEmailLikeUsername(user.getUsername()))
                 .expiresInSeconds(otpService.getExpireSeconds())
-                .otpDev(otp) // DEV only
+                .otpDev(devMode ? otp : null) // chỉ trả OTP trong DEV
                 .build();
     }
 
     public void resend(ResendOtpRequest req) {
-        User user = userRepo.findByUsername(req.getUsername())
+        User user = userRepo.findByEmail(req.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         otpService.generateAndStoreRegisterOtp(user);
     }
 
     public void verify(VerifyOtpRequest req) {
-        User user = userRepo.findByUsername(req.getUsername())
+        User user = userRepo.findByUsername(req.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         otpService.verifyRegisterOtp(user, req.getOtp());
         user.setVerified(true); // xác thực xong cho phép login

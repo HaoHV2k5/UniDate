@@ -9,7 +9,7 @@ import lombok.Data;
 public class RegisterRequest {
     @NotBlank(message = "USERNAME_NOT_BLANK")
     @Email(message = "EMAIL_INVALID")
-    private String username;
+    private String email;
 
     @NotBlank(message = "PASSWORD_NOT_BLANK")
     @Size(min = 6, message = "PASSWORD_INVALID")
