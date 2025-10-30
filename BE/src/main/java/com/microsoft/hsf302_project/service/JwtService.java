@@ -2,6 +2,7 @@ package com.microsoft.hsf302_project.service;
 
 
 import com.microsoft.hsf302_project.entity.User;
+import com.microsoft.hsf302_project.enums.Role;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.nimbusds.jose.*;
@@ -61,7 +62,7 @@ public class JwtService {
 
     }
 
-    public String buidScope(String roles){
+    public String buidScope(Role roles){
         StringJoiner stringJoiner = new StringJoiner(" ");
 
             stringJoiner.add("ROLE_"+roles);
