@@ -40,6 +40,10 @@ public class AuthService {
 
         User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow( () -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        // Chặn đăng nhập nếu chưa xác thực OTP
+        if (Boolean.FALSE.equals(user.getVerified())) {
+            throw new AppException(ErrorCode.OTP_NOT_VERIFY);
+        }
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         boolean auth = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());

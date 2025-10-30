@@ -28,6 +28,11 @@ public class User {
 
     private String fullName;
 
+    // Thêm cờ xác thực OTP, mặc định true để user hiện hữu không bị chặn login
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean verified = true;
+
     @Column(unique = true)
     private String email;
 
