@@ -63,18 +63,18 @@ public class AuthService {
 
 
 
-    public IntrospectResponse introspectToken(IntrospectRequest request){
-        String token = request.getToken();
-        boolean isValid = true;
-
-        try {
-            jwtService.verifyJwt(token);
-        } catch (Exception e) {
-            isValid = false;
-        }
-        return IntrospectResponse.builder().authenticated(isValid).build();
-
-    }
+//    public IntrospectResponse introspectToken(IntrospectRequest request){
+//        String token = request.getToken();
+//        boolean isValid = true;
+//
+//        try {
+//            jwtService.verifyJwt(token);
+//        } catch (Exception e) {
+//            isValid = false;
+//        }
+//        return IntrospectResponse.builder().authenticated(isValid).build();
+//
+//    }
 
 
 

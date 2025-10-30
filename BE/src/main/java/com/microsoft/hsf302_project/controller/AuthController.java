@@ -33,11 +33,11 @@ public class AuthController {
         return ApiResponse.<LoginResponse>builder().data(result).build();
     }
 
-    @PostMapping("/introspect")
-    public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request) {
-        IntrospectResponse result = authService.introspectToken(request);
-        return ApiResponse.<IntrospectResponse>builder().data(result).build();
-    }
+//    @PostMapping("/introspect")
+//    public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request) {
+//        IntrospectResponse result = authService.introspectToken(request);
+//        return ApiResponse.<IntrospectResponse>builder().data(result).build();
+//    }
 
 
 
