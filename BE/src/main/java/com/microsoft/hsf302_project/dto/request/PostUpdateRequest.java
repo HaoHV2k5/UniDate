@@ -13,7 +13,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostRequest {
+public class PostUpdateRequest {
+
     @NotNull
     @NotBlank(message = "TITLE_NOT_BLANK")
     @Size(min = 1, max = 50, message = "TITLE_LENGTH_NOT_VALID")
@@ -22,5 +23,5 @@ public class PostRequest {
     @NotBlank(message = "CONTENT_NOT_BLANK")
     private String content;
     private List<MultipartFile> image;
-    private boolean isPrivate;
+
 }

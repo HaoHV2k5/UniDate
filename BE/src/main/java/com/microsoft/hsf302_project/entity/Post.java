@@ -18,10 +18,10 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 2048)
+    @Column(nullable = false,columnDefinition = "NVARCHAR(2048)")
     private String content;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false,columnDefinition = "NVARCHAR(50)")
     private String title;
 
     private List<String> imageUrl;
@@ -40,4 +40,15 @@ public class Post {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private PostStatus status = PostStatus.VISIBLE;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
