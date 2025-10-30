@@ -2,6 +2,7 @@ package com.microsoft.hsf302_project.config;
 
 
 import com.microsoft.hsf302_project.entity.User;
+import com.microsoft.hsf302_project.enums.Role;
 import com.microsoft.hsf302_project.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class ApplicationInitConfig {
                User user = User.builder()
                        .username("admin@gmail.com")
                        .password(passwordEncoder.encode("admin"))
-                       .role("ADMIN")
+                       .role(Role.ADMIN)
                        .email("admin@gmail.com")
 
                        .build();
