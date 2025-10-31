@@ -1,15 +1,17 @@
 package com.microsoft.hsf302_project.entity;
 
+import com.microsoft.hsf302_project.enums.Gender;
+import com.microsoft.hsf302_project.enums.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.LocalDate;
 
 import java.time.LocalDate;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -59,4 +61,24 @@ public class User {
     @Column(nullable = false)
     private Boolean verified = true;
 
+}
+    @Column(unique = true)
+    private String email;
+
+    @Column(unique = true)
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    private LocalDate birthDate;
+    private String bio;
+    private String major;
+    private String university;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Column(nullable = false)
+    private boolean active = true;
 }

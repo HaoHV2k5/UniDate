@@ -124,8 +124,8 @@ const Register = () => {
       return;
     }
 
-    if (!formData.email.includes("@") || !formData.email.includes(".edu")) {
-      toast.error("Vui lòng sử dụng email trường (@*.edu)");
+    if (!formData.email.includes("@")) {
+      toast.error("Sai định dạng email");
       return;
     }
 
@@ -190,11 +190,11 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email trường (@*.edu)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="nguyenvana@university.edu.vn"
+                placeholder="nguyenvana@gmail.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
