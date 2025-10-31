@@ -8,11 +8,14 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class SwipeHistoryItemResponse {
+public class SwipeInboxItemResponse {
     private Long swipeId;
-    private Long targetUserId;
-    private String targetUsername;
-    private String targetFullName;
+
+    // Thông tin NGƯỜI ĐÃ TÁC ĐỘNG đến mình
+    private Long sourceUserId;
+    private String sourceUsername;
+    private String sourceFullName;
+
     private SwipeAction action;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
