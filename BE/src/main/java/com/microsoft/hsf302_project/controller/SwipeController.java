@@ -1,10 +1,7 @@
 package com.microsoft.hsf302_project.controller;
 
 import com.microsoft.hsf302_project.dto.request.SwipeRequest;
-import com.microsoft.hsf302_project.dto.response.ApiResponse;
-import com.microsoft.hsf302_project.dto.response.SwipeHistoryItemResponse;
-import com.microsoft.hsf302_project.dto.response.SwipeResponse;
-import com.microsoft.hsf302_project.enums.SwipeAction;
+import com.microsoft.hsf302_project.dto.response.*;
 import com.microsoft.hsf302_project.service.SwipeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,14 +24,25 @@ public class SwipeController {
                 .build();
     }
 
+    // HỘP THƯ: những ai đã LIKE/DISLIKE mình (trạng thái cuối)
+    @GetMapping("/inbox")
+    public ApiResponse<Page<SwipeInboxItemResponse>> inbox(Authentication authentication,
+                                                           @RequestParam(defaultValue = "0") int page,
+                                                           @RequestParam(defaultValue = "20") int size) {
+        var data = swipeService.inbox(authentication, page, size);
+        return ApiResponse.<Page<SwipeInboxItemResponse>>builder()
+                .data(data).message("Hộp thư swipe (nhận).")
+                .build();
+    }
+
+    // Lượt mình đã làm – vẫn giữ nếu sau này cần
     @GetMapping("/history")
     public ApiResponse<Page<SwipeHistoryItemResponse>> history(Authentication authentication,
-                                                               @RequestParam(required = false) SwipeAction action,
                                                                @RequestParam(defaultValue = "0") int page,
                                                                @RequestParam(defaultValue = "20") int size) {
-        var data = swipeService.history(authentication, action, page, size);
+        var data = swipeService.history(authentication, page, size);
         return ApiResponse.<Page<SwipeHistoryItemResponse>>builder()
-                .data(data).message("Lịch sử swipe.")
+                .data(data).message("Lịch sử swipe (đã thực hiện).")
                 .build();
     }
 }

@@ -27,14 +27,6 @@ public class OtpService {
     private static final int EXPIRE_MINUTES = 10;
     private static final int MAX_ATTEMPTS = 5;
 
-    // Bật/tắt log OTP ra console ở môi trường DEV
-    @Value("${app.dev-mode:true}")
-    private boolean devMode;
-
-    /**
-     * Sinh OTP đăng ký, lưu DB, gửi email cho người dùng.
-     * Trả về OTP (chỉ nên sử dụng cho DEV; PROD hãy bỏ qua giá trị trả về này).
-     */
     public String generateAndStoreRegisterOtp(User user) {
         String otp = OtpUtils.random6Digits();
 
@@ -49,25 +41,18 @@ public class OtpService {
                 .build();
         userOtpRepo.save(entity);
 
-        // DEV: log OTP nếu cần hỗ trợ test nhanh
-        if (devMode) {
-            log.info("[DEV ONLY] OTP for {} is {}", user.getUsername(), otp);
-        }
-
-        // Gửi email OTP thực tế
-        emailService.send(
+        // Gửi email OTP HTML (Thymeleaf)
+        emailService.sendOtpEmail(
+                user.getEmail(),
+                "UniDate - Mã xác thực OTP đăng ký",
                 user.getUsername(),
-                "UniDate - OTP đăng ký",
-                "Mã OTP của bạn: " + otp + "\nHiệu lực: " + EXPIRE_MINUTES + " phút."
+                otp,
+                EXPIRE_MINUTES
         );
 
         return otp;
     }
 
-    /**
-     * Kiểm tra OTP đăng ký: hết hạn, số lần nhập sai, và khớp hash.
-     * Nếu đúng: đánh dấu đã dùng.
-     */
     public void verifyRegisterOtp(User user, String rawOtp) {
         UserOtp latest = userOtpRepo
                 .findTopByUserAndTypeAndUsedFalseOrderByCreatedAtDesc(user, OtpType.REGISTER)
