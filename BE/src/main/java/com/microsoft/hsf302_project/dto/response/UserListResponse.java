@@ -1,6 +1,5 @@
 package com.microsoft.hsf302_project.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,19 +8,20 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
+@NoArgsConstructor
+@Builder
+public class UserListResponse {
     private Long id;
     private String username;
     private String email;
-    private String phone;
     private String fullName;
+    private String phone;
+    private String address;
     private String gender;
-
-    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate yob;
     private String avatar;
-    private String address;
+    private boolean verified;
+    private boolean locked;
+    private String roles;
 }

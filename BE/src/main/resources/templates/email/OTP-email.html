@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #fff6f9;
+            margin: 0;
+            padding: 0;
+        }
+        .wrapper {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(255, 182, 193, 0.25);
+            border: 2px solid #ffe0eb;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6fa0, #ff8fab);
+            color: #fff;
+            padding: 26px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 28px;
+            text-align: center;
+        }
+        .content h2 {
+            color: #e84393;
+            margin-bottom: 12px;
+            font-size: 22px;
+        }
+        .content p {
+            color: #444;
+            font-size: 15px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .otp-box {
+            display: inline-block;
+            font-size: 32px;
+            letter-spacing: 10px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #ff6fa0, #ff8fab);
+            padding: 18px 36px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #ff5c8d;
+            color: #fff !important;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: 16px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+        }
+        .cta-btn:hover {
+            background: #e84393;
+            transform: translateY(-2px);
+        }
+        .footer {
+            background: #fff0f5;
+            padding: 18px;
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <!-- Header -->
+    <div class="header">
+        <h1>💞 Xác Thực Tài Khoản UniDate 💞</h1>
+    </div>
+
+    <!-- Nội dung -->
+    <div class="content">
+        <h2>Xin chào <span th:text="${name}">Thành viên đáng yêu</span> 💐</h2>
+        <p>Chào mừng bạn đến với <strong>UniDate</strong> — nơi những trái tim sinh viên kết nối 💌</p>
+        <p>Đây là mã OTP của bạn để xác thực email và bắt đầu hành trình tìm “nửa kia” 💖:</p>
+
+        <p><strong>Email đăng ký:</strong> <span th:text="${originalEmail}">user@example.com</span></p>
+
+        <div class="otp-box" th:text="${otp}">123456</div>
+
+        <p>Mã OTP có hiệu lực trong vòng <strong>5 phút</strong>.<br>
+            Hãy dùng nó để hoàn tất đăng ký và mở cánh cửa đến những cuộc trò chuyện thú vị 💬</p>
+
+        <a href="http://localhost:5173/verify-otp.html" class="cta-btn">Xác Thực Ngay 💘</a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Nếu bạn không yêu cầu xác thực, vui lòng bỏ qua email này 💌<br>
+        © 2025 UniDate – Nơi kết nối những trái tim trẻ 💕
+    </div>
+</div>
+</body>
+</html>
