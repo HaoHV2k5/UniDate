@@ -5,19 +5,20 @@ import com.microsoft.hsf302_project.dto.request.PostUpdateRequest;
 import com.microsoft.hsf302_project.dto.response.PostResponse;
 import com.microsoft.hsf302_project.entity.Post;
 import com.microsoft.hsf302_project.entity.User;
+import com.microsoft.hsf302_project.entity.Like;
 import com.microsoft.hsf302_project.enums.PostStatus;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.mapper.PostMapper;
 import com.microsoft.hsf302_project.repo.PostRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
+import com.microsoft.hsf302_project.repo.LikeRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class PostService {
     private final CloudinaryService cloudinaryService;
     private final PostMapper postMapper;
 private final UserRepo userRepo;
+private final LikeRepo likeRepo;
 
 
     public PostResponse createPost(PostRequest request, String usrname) {
@@ -111,5 +113,29 @@ private final UserRepo userRepo;
         return pagePost.map(postMapper::toPostResponse);
     }
 
+    public void likeOrDislikePost(Long postId, User user, String type) {
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        Like like = likeRepo.findByUserAndPost(user, post).orElse(null);
+        if (like == null) {
+            like = Like.builder()
+                    .user(user)
+                    .post(post)
+                    .type(type)
+                    .build();
+        } else {
+            like.setType(type);
+        }
+        likeRepo.save(like);
+    }
+
+    public int countLike(Long postId) {
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        return likeRepo.countByPostAndType(post, "LIKE");
+    }
+
+    public int countDislike(Long postId) {
+        Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        return likeRepo.countByPostAndType(post, "DISLIKE");
+    }
 
 }

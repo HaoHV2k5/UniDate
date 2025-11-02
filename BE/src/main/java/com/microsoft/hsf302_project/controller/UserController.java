@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -28,40 +29,40 @@ public class UserController {
     private final MailService mailService;
 
 
-//    @GetMapping("/all")
-//    public ResponseEntity<List<UserResponse>> getAllUsers() {
-//        return ResponseEntity.ok(userService.getAllUsers());
-//    }
-//
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-//        return ResponseEntity.ok(userService.getUserById(id));
-//    }
-//    @PostMapping("/update/{id}")
-//    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
-//        return ResponseEntity.ok(userService.updateUser(id, request));
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/all")
+    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
+    }
 
-//    @PostMapping("/delete/{id}")
-//    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-//        userService.deleteUser(id);
-//        return ResponseEntity.ok("Xóa người dùng thành công");
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/{id}")
+    public ApiResponse<UserResponse> getUserByIdForAdmin(@PathVariable Long id) {
+        UserResponse user = userService.getUserById(id);
+        return ApiResponse.<UserResponse>builder().data(user).message("Lấy user thành công").build();
+    }
 
-//    @PostMapping("/update-password/{id}")
-//    public ResponseEntity<UserResponse> updatePassword(@PathVariable Long id, @RequestBody UserPasswordUpdateRequest request) {
-//        return ResponseEntity.ok(userService.updatePassword(id, request));
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin")
+    public ApiResponse<UserResponse> createUserByAdmin(@RequestBody @Valid UserRequest request) {
+        UserResponse userResponse = userService.createUserByAdmin(request);
+        return ApiResponse.<UserResponse>builder().data(userResponse).message("Tạo user thành công").build();
+    }
 
-//    @PostMapping("/create-profile/{id}")
-//    public ResponseEntity<UserResponse> createProfile(@PathVariable Long id, @RequestBody UserProfileRequest request) {
-//        return ResponseEntity.ok(userService.createProfile(id, request));
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/admin/{id}")
+    public ApiResponse<UserResponse> updateUserByAdmin(@PathVariable Long id, @RequestBody @Valid UserUpdateRequest request) {
+        UserResponse userResponse = userService.updateUserByAdmin(id, request);
+        return ApiResponse.<UserResponse>builder().data(userResponse).message("Cập nhật user thành công").build();
+    }
 
-
-
-
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/admin/{id}")
+    public ApiResponse<Void> deleteUserByAdmin(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ApiResponse.<Void>builder().message("Xóa user thành công").build();
+    }
 
 
     @GetMapping("/me")
