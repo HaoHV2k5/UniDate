@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chào mừng đến với UniDate 💞</title>
+    <style>
+        body {
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            background-color: #fff6f9;
+            margin: 0;
+            padding: 0;
+        }
+        .wrapper {
+            max-width: 650px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(255, 182, 193, 0.25);
+            border: 2px solid #ffe0eb;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6fa0, #ff8fab);
+            color: white;
+            text-align: center;
+            padding: 34px 24px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 5px 0 0;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 32px;
+            color: #444;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #e84393;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .highlight {
+            color: #ff5c8d;
+            font-weight: bold;
+        }
+        ul {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        ul li {
+            margin-bottom: 8px;
+        }
+
+        /* ---------------------- Nút CTA ---------------------- */
+        .cta {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .cta a {
+            background: linear-gradient(135deg, #ff5c8d, #ff82a9);
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+            cursor: pointer;
+            position: relative;
+        }
+        .cta a:hover {
+            background: #e84393;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(255, 105, 180, 0.4);
+        }
+        .cta a:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 2px 6px rgba(255, 105, 180, 0.2);
+        }
+
+        /* Hiệu ứng bàn tay dễ thương 👆 */
+        .cta a::after {
+            content: '👆';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%) scale(0);
+            opacity: 0;
+            transition: all 0.25s ease;
+        }
+        .cta a:hover::after {
+            transform: translateY(-60%) scale(1.1) rotate(-10deg);
+            opacity: 1;
+        }
+
+        /* ---------------------- Footer ---------------------- */
+        .footer {
+            background: #fff0f5;
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <h1>💞 UniDate 💞</h1>
+        <p>Nền tảng kết nối trái tim sinh viên Việt Nam</p>
+    </div>
+
+    <div class="content">
+        <h2>Xin chào <span th:text="${name}">Thành viên mới</span> 🌸</h2>
+
+        <p>
+            🎉 Chào mừng bạn đã <span class="highlight">gia nhập UniDate</span> — nơi bạn có thể bắt đầu những kết nối chân thành,
+            tìm kiếm người bạn tâm giao hay thậm chí là tình yêu 💘
+        </p>
+
+        <p>Với tài khoản UniDate, bạn có thể:</p>
+        <ul>
+            <li>🪄 Tạo hồ sơ của riêng bạn với ảnh và sở thích cá nhân.</li>
+            <li>💬 Trò chuyện và làm quen với những người bạn cùng trường hoặc gần bạn.</li>
+            <li>💓 Tham gia các sự kiện ghép đôi thú vị và đáng nhớ.</li>
+        </ul>
+
+        <div class="cta">
+            <a th:href="${loginUrl}">💗 Bắt đầu hành trình yêu thương 💗</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email này 💌</p>
+        <p>© 2025 UniDate — Nơi bắt đầu những mối duyên đẹp 💕</p>
+    </div>
+</div>
+</body>
+</html>

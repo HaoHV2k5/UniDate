@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+/src/main/resources/unidate-2830e-firebase-adminsdk-fbsvc-b2820e2201.json
+

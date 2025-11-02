@@ -40,6 +40,7 @@ public enum ErrorCode {
     POST_NOT_EXISTED (1028, "Bài đăng không tồn tại", HttpStatus.NOT_FOUND),
 
     LOGIN_FAIL (1029, "Đăng nhập không thành công, mật khẩu không đúng", HttpStatus.NOT_FOUND),
+    EMAIL_EXISTED (1030, "Email này đã được sử dụng", HttpStatus.NOT_FOUND),
 
 
 

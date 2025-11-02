@@ -35,18 +35,19 @@ public class SecurityConfig {
     private String secretKey;
 
     private static final String[] WHITE_LIST = {
-            "/auth/**",
+            "/api/auth/**",
             "/users/register",
-            "/users/verify-otp",
-            "/users/resend-otp",
+            "/api/verify-otp",
+            "/api/resend-otp",
             "/tag/**",
+            "/api/users/forgot-password",
+            "/api/users/reset-password",
 
 
-            "/api/v1/products/active",
-            "/api/v1/products/{id}",
             "/api/payment/vnpay-return",
             "/api/payment/create",
-            "https://freddie-forestial-tiny.ngrok-free.dev/api/payment/ipn"
+            "https://freddie-forestial-tiny.ngrok-free.dev/api/payment/ipn",
+            "/api/post/**"
     };
     
 
