@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.microsoft.hsf302_project.entity.User;
 
 @RestController
 @RequestMapping("/api/post")
@@ -113,8 +114,21 @@ public class PostController {
 
     // nếu đã match được với nhau thì có theer xem tin private và public
 
+    @PostMapping("/{id}/like")
+    public ApiResponse<Void> likePost(Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        User user = userService.getUser(username);
+        postService.likeOrDislikePost(id, user, "LIKE");
+        return ApiResponse.<Void>builder().message("Đã like bài viết").build();
+    }
 
-
+    @PostMapping("/{id}/dislike")
+    public ApiResponse<Void> dislikePost(Authentication authentication, @PathVariable Long id) {
+        String username = authentication.getName();
+        User user = userService.getUser(username);
+        postService.likeOrDislikePost(id, user, "DISLIKE");
+        return ApiResponse.<Void>builder().message("Đã dislike bài viết").build();
+    }
 
 
 }

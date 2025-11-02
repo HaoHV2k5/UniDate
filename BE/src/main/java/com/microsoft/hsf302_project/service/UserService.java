@@ -29,6 +29,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final  OtpService otpService;
+    private final AuthService authService;
 
     public List<UserResponse> getAllUsers() {
         return userRepo.findAll().stream()
@@ -120,5 +121,31 @@ public class UserService {
     public void updatePassword(User user,String password){
         user.setPassword(passwordEncoder.encode(password));
         userRepo.save(user);
+    }
+
+    public UserResponse createUserByAdmin(UserRequest request) {
+        User user = authService.processRegisterByAdmin(
+                request.getUsername(),
+                request.getPassword(),
+                request.getConfirmPassword(),
+                () -> {
+                    User u = new User();
+                    u.setUsername(request.getUsername());
+                    u.setPassword(request.getPassword());
+                    u.setFullName(request.getFullName());
+                    u.setRole(request.getRole() != null ? request.getRole() : "USER");
+                    u.setEmail(request.getUsername());
+                    return u;
+                }
+        );
+        return userMapper.toUserResponse(user);
+    }
+
+    public UserResponse updateUserByAdmin(Long id, UserUpdateRequest request) {
+        User user = userRepo.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if(request.getFullName() != null) user.setFullName(request.getFullName());
+        if(request.getRole() != null) user.setRole(request.getRole());
+        userRepo.save(user);
+        return userMapper.toUserResponse(user);
     }
 }

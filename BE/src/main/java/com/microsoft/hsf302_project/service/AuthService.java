@@ -38,7 +38,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserMapper userMapper;
     private final CloudinaryService cloudinaryService;
-    private final UserService userService;
+
     private final PasswordEncoder passwordEncoder;
 
 
