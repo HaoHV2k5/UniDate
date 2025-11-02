@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, Upload } from "lucide-react";
 import { toast } from "sonner";
+import api from "@/api/api";
 
 // Interface cho cánh hoa anh đào
 interface CherryBlossom {
@@ -23,12 +24,15 @@ interface CherryBlossom {
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
-    major: "",
-    year: "",
-    avatar: null as File | null,
+    confirmPassword: "",
+    gender: "",
+    yob: "",
+    phone: "",
+    address: "",
+    image: null as File | null,
   });
 
   // State cho các cánh hoa anh đào
@@ -41,14 +45,11 @@ const Register = () => {
     let x: number;
     let y: number;
 
-    // 70% hoa xuất hiện ở khu vực góc phải (3/4 phải màn hình, phần trên)
     if (rand < 0.7) {
       x = 60 + Math.random() * 80;
       y = Math.random() * -30;
-    }
-    // 30% còn lại rải rác nhẹ ở vùng trên giữa
-    else {
-      x = 25 + Math.random() * 25;   // giữa đến phải giữa
+    } else {
+      x = 25 + Math.random() * 25;
       y = Math.random() * -20;
     }
 
@@ -63,24 +64,22 @@ const Register = () => {
       speedY: Math.random() * 0.12 + 0.08,
     };
   };
-  // Khởi tạo cánh hoa ban đầu
+
   useEffect(() => {
-    const initialBlossoms = Array.from({ length: 6 }, createBlossom); // Giảm số lượng
+    const initialBlossoms = Array.from({ length: 6 }, createBlossom);
     setBlossoms(initialBlossoms);
   }, []);
 
-  // Animation với requestAnimationFrame
   useEffect(() => {
     let animationFrameId: number;
 
     const updateBlossoms = () => {
       setBlossoms(prevBlossoms =>
         prevBlossoms.map(blossom => {
-          let newX = blossom.x - blossom.speedX; // Di chuyển sang trái
-          let newY = blossom.y + blossom.speedY; // Di chuyển xuống dưới
-          let newRotation = blossom.rotation + 0.3; // Xoay rất chậm
+          let newX = blossom.x - blossom.speedX;
+          let newY = blossom.y + blossom.speedY;
+          let newRotation = blossom.rotation + 0.3;
 
-          // Nếu hoa ra khỏi màn hình, tạo lại ở bên phải
           if (newY > 100 || newX < -10) {
             return createBlossom();
           }
@@ -104,10 +103,9 @@ const Register = () => {
     };
   }, []);
 
-  // Thêm cánh hoa mới mỗi 3 giây (chậm hơn)
   useEffect(() => {
     const interval = setInterval(() => {
-      if (blossoms.length < 40) { // Giới hạn tổng số hoa
+      if (blossoms.length < 40) {
         setBlossoms(prev => [...prev, createBlossom()]);
       }
     }, 2000);
@@ -115,35 +113,82 @@ const Register = () => {
     return () => clearInterval(interval);
   }, [blossoms.length]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // helper: format yyyy-mm-dd -> dd/MM/yyyy (backend định dạng dd/MM/yyyy)
+  const formatYobToDdMmYyyy = (isoDate: string) => {
+    if (!isoDate) return "";
+    // isoDate expected "yyyy-mm-dd"
+    const [y, m, d] = isoDate.split("-");
+    if (!y || !m || !d) return isoDate;
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.major || !formData.year) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
-      return;
-    }
-
-    if (!formData.email.includes("@")) {
-      toast.error("Sai định dạng email");
+    // validate cơ bản
+    if (
+      !formData.fullName ||
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword ||
+      !formData.yob
+    ) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
     if (formData.password.length < 6) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+      toast.error("Mật khẩu phải ít nhất 6 ký tự");
       return;
     }
 
-    // Navigate to OTP verification
-    toast.success("Đang gửi mã xác thực...");
-    setTimeout(() => {
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    try {
+      toast.loading("Đang xử lý...");
+
+      const data = new FormData();
+
+      data.append("fullName", formData.fullName);
+      data.append("email", formData.email);
+      data.append("password", formData.password);
+      data.append("confirmPassword", formData.confirmPassword);
+      data.append("gender", formData.gender || "");
+      data.append("yob", formatYobToDdMmYyyy(formData.yob));
+      data.append("phone", formData.phone || "");
+      data.append("address", formData.address || "");
+
+      if (formData.image) {
+        data.append("image", formData.image);
+      }
+
+      // Debug: Log tất cả các field trong FormData
+      console.log("FormData contents:");
+      for (let [key, value] of data.entries()) {
+        console.log(key, value instanceof File ? `File: ${value.name}` : value);
+      }
+
+      await api.post("api/auth/register", data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      toast.dismiss();
+      toast.success("Vui lòng kiểm tra email để lấy OTP");
       navigate("/otp-verify", { state: { email: formData.email } });
-    }, 1000);
+    } catch (err: any) {
+      toast.dismiss();
+      console.error("Registration error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Đăng ký thất bại");
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4 relative overflow-hidden">
-      {/* Các cánh hoa anh đào */}
       {blossoms.map((blossom) => (
         <div
           key={blossom.id}
@@ -157,14 +202,13 @@ const Register = () => {
             zIndex: 10,
             transition: 'transform 0.2s linear, opacity 0.2s linear',
             color: `hsl(330, 70%, 75%)`,
-            willChange: 'transform, opacity', // Tối ưu hiệu suất
+            willChange: 'transform, opacity',
           }}
         >
           {Math.random() > 0.5 ? '🌸' : '💮'}
         </div>
       ))}
 
-      {/* Form đăng ký */}
       <Card className="w-full max-w-xl shadow-hover relative z-20">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -180,12 +224,13 @@ const Register = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Họ và tên</Label>
+              <Label htmlFor="fullName">Họ và tên</Label>
               <Input
-                id="name"
+                id="fullName"
                 placeholder="Nguyễn Văn A"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                required
               />
             </div>
 
@@ -197,67 +242,95 @@ const Register = () => {
                 placeholder="nguyenvana@gmail.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">
-                Bạn sẽ nhận mã OTP qua email này
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="major">Ngành học</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, major: value })}>
+                <Label htmlFor="password">Mật khẩu</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  required
+                  minLength={6}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="gender">Giới tính</Label>
+                <Select onValueChange={(value) => setFormData({ ...formData, gender: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn ngành" />
+                    <SelectValue placeholder="Chọn" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cntt">Công nghệ thông tin</SelectItem>
-                    <SelectItem value="ktoan">Kinh tế</SelectItem>
-                    <SelectItem value="dtvt">Điện tử viễn thông</SelectItem>
-                    <SelectItem value="nna">Ngôn ngữ Anh</SelectItem>
-                    <SelectItem value="marketing">Marketing</SelectItem>
-                    <SelectItem value="khac">Khác</SelectItem>
+                    <SelectItem value="MALE">Nam</SelectItem>
+                    <SelectItem value="FEMALE">Nữ</SelectItem>
+                    <SelectItem value="OTHER">Khác</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="year">Năm học</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, year: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Năm" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Năm 1</SelectItem>
-                    <SelectItem value="2">Năm 2</SelectItem>
-                    <SelectItem value="3">Năm 3</SelectItem>
-                    <SelectItem value="4">Năm 4</SelectItem>
-                    <SelectItem value="5">Năm 5+</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="yob">Ngày sinh</Label>
+                <Input
+                  id="yob"
+                  type="date"
+                  value={formData.yob}
+                  onChange={(e) => setFormData({ ...formData, yob: e.target.value })}
+                  required
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="avatar">Ảnh đại diện</Label>
+              <Label htmlFor="phone">Số điện thoại</Label>
+              <Input
+                id="phone"
+                placeholder="(Ví dụ: 098xxxxxxx)"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Địa chỉ</Label>
+              <Input
+                id="address"
+                placeholder="Hà Nội, Việt Nam"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="image">Ảnh đại diện</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  id="avatar"
+                  id="image"
                   type="file"
+                  name="image" // THÊM DÒNG NÀY - QUAN TRỌNG
                   accept="image/*"
                   onChange={(e) =>
-                    setFormData({ ...formData, avatar: e.target.files?.[0] || null })
+                    setFormData({ ...formData, image: e.target.files?.[0] || null })
                   }
                   className="cursor-pointer"
                 />

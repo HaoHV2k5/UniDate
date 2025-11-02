@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart } from "lucide-react";
+import { Heart, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { loginWithGoogle } from "@/services/firebase"
+import { Separator } from "@/components/ui/separator";
 import api from "@/api/api";
 
 // Interface cho trái tim
@@ -76,7 +78,7 @@ const Login = () => {
     }
 
     try {
-      const res = await api.post("/auth/login", {
+      const res = await api.post("/api/auth/login", {
         username: formData.email,
         password: formData.password,
       });
@@ -84,17 +86,76 @@ const Login = () => {
       const data = res.data.data;
       toast.success("Đăng nhập thành công!");
 
+      // 🔹 Lưu token
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
 
+      // 🔹 Lưu thông tin user (từ backend trả về)
+      const user = data.user;
+      if (user) {
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("username", user.username);
+        localStorage.setItem("email", user.email);
+        localStorage.setItem("fullName", user.fullName || "");
+        localStorage.setItem("gender", user.gender || "");
+        localStorage.setItem("avatar", user.avatar || "");
+        localStorage.setItem("address", user.address || "");
+        localStorage.setItem("phone", user.phone || "");
+        localStorage.setItem("yob", user.yob || "");
+      }
+
+      // 🔹 Điều hướng
       setTimeout(() => {
         const role = data.user?.role;
-        navigate(role === "admin" || "ADMIN" ? "/admin" : "/discover");
+        const isAdmin = role === "admin" || role === "ADMIN";
+        navigate(isAdmin ? "/admin" : "/discover");
       }, 800);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Sai email hoặc mật khẩu");
     }
   };
+
+
+
+  const handleGoogleLogin = async () => {
+    try {
+      const token = await loginWithGoogle();
+
+      const res = await api.post("/api/auth/firebase", { token });
+
+      const { accessToken, refreshToken } = res.data.data;
+
+      // lưu token backend
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      toast.success("Đăng nhập bằng Google thành công!");
+      navigate("/discover");
+    } catch (err) {
+      toast.error("Đăng nhập Google thất bại");
+      console.error(err);
+    }
+  };
+
+  // const handleFacebookLogin = async () => {
+  //   try {
+  //     const token = await loginWithFacebook();
+
+  //     const res = await api.post("/api/auth/firebase", { token });
+
+  //     const { accessToken, refreshToken } = res.data.data;
+
+  //     localStorage.setItem("accessToken", accessToken);
+  //     localStorage.setItem("refreshToken", refreshToken);
+
+  //     toast.success("Đăng nhập bằng Facebook thành công!");
+  //     navigate("/discover");
+  //   } catch (err) {
+  //     toast.error("Đăng nhập Facebook thất bại");
+  //     console.error(err);
+  //   }
+  // };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4 relative overflow-hidden">
@@ -165,6 +226,35 @@ const Login = () => {
             <Button type="submit" variant="hero" size="lg" className="w-full">
               Đăng nhập
             </Button>
+            <div className="flex gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 flex items-center justify-center gap-2 border rounded-xl py-2"
+                onClick={handleGoogleLogin}
+              >
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  className="h-5 w-5"
+                />
+                Google
+              </Button>
+
+              {/* <Button
+                type="button"
+                variant="outline"
+                className="flex-1 flex items-center justify-center gap-2 border rounded-xl py-2"
+                onClick={handleFacebookLogin}
+              >
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/facebook.svg"
+                  alt="Facebook"
+                  className="h-5 w-5"
+                />
+                Facebook
+              </Button> */}
+            </div>
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Chưa có tài khoản? </span>
@@ -173,6 +263,8 @@ const Login = () => {
               </Link>
             </div>
           </form>
+
+
         </CardContent>
       </Card>
     </div>
