@@ -102,7 +102,7 @@ const Profile = () => {
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
-        const res = await api.get("/api/user/me");
+        const res = await api.get("/api/users/me");
         // backend may wrap in { data: ... } or return object directly
         const cu: UserProfile = res.data?.data ?? res.data;
         setCurrentUser(cu);

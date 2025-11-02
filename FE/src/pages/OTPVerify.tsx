@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Heart, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import api from "@/api/api";
 
 const OTPVerify = () => {
   const location = useLocation();
@@ -39,32 +40,44 @@ const OTPVerify = () => {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendCount >= 3) {
       toast.error("Bạn đã gửi lại mã quá nhiều lần. Vui lòng thử lại sau.");
       return;
     }
 
-    setResendCount(resendCount + 1);
-    setCountdown(60);
-    setCanResend(false);
-    toast.success("Mã OTP mới đã được gửi!");
+    try {
+      await api.post("/api/resend-otp", { email });
+
+      setResendCount(resendCount + 1);
+      setCountdown(60);
+      setCanResend(false);
+      toast.success("Mã OTP mới đã được gửi!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Không thể gửi lại OTP. Thử lại sau.");
+    }
   };
 
-  const handleVerify = () => {
+
+
+  const handleVerify = async () => {
     const otpCode = otp.join("");
-    
+
     if (otpCode.length !== 6) {
       toast.error("Vui lòng nhập đầy đủ 6 chữ số");
       return;
     }
 
-    // Mock verification
-    toast.success("Xác thực thành công!");
-    setTimeout(() => {
-      navigate("/discover");
-    }, 1000);
+    try {
+      await api.post("/api/verify-otp", { email, otp: otpCode });
+
+      toast.success("Xác thực thành công!");
+      setTimeout(() => navigate("/login"), 800);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "OTP sai hoặc đã hết hạn!");
+    }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4">
@@ -79,13 +92,13 @@ const OTPVerify = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Quay lại
           </Button>
-          
+
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-full bg-gradient-primary">
               <Heart className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          
+
           <CardTitle className="text-2xl font-bold text-center">
             Xác thực OTP
           </CardTitle>
