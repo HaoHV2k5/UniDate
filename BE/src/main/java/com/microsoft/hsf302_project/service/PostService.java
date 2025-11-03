@@ -2,6 +2,7 @@ package com.microsoft.hsf302_project.service;
 
 import com.microsoft.hsf302_project.dto.request.PostRequest;
 import com.microsoft.hsf302_project.dto.request.PostUpdateRequest;
+import com.microsoft.hsf302_project.dto.response.LikeResponse;
 import com.microsoft.hsf302_project.dto.response.PostResponse;
 import com.microsoft.hsf302_project.entity.Post;
 import com.microsoft.hsf302_project.entity.User;
@@ -9,6 +10,7 @@ import com.microsoft.hsf302_project.entity.Like;
 import com.microsoft.hsf302_project.enums.PostStatus;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
+import com.microsoft.hsf302_project.mapper.LikeMapper;
 import com.microsoft.hsf302_project.mapper.PostMapper;
 import com.microsoft.hsf302_project.repo.PostRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
@@ -30,8 +32,9 @@ public class PostService {
     private final PostRepo postRepo;
     private final CloudinaryService cloudinaryService;
     private final PostMapper postMapper;
-private final UserRepo userRepo;
-private final LikeRepo likeRepo;
+    private final UserRepo userRepo;
+    private final LikeRepo likeRepo;
+    private final LikeMapper likeMapper;
 
 
     public PostResponse createPost(PostRequest request, String usrname) {
@@ -151,5 +154,37 @@ private final LikeRepo likeRepo;
         Post post = postRepo.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
         return likeRepo.countByPostAndType(post, "DISLIKE");
     }
+    // lấy hết lịch sử like và dislike
+    public Page<LikeResponse> getReactions(String username, int page, int size) {
+        User user = userRepo.getUserByUsername(username);
+        Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
+        Page<Like> likes = likeRepo.findAllByUser(user, pageable);
+        return likes.map(likeMapper::toLikeResponse);
+    }
+
+    // lay lich su like
+
+    public Page<LikeResponse> getTypeLikes(String username, int page, int size) {
+        User user = userRepo.getUserByUsername(username);
+        Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
+
+        Page<Like> likes = likeRepo.findAllByUserAndType(user,"LIKE", pageable);
+        return likes.map(likeMapper::toLikeResponse);
+    }
+
+    // lay lich su dislike
+    public Page<LikeResponse> getTypeDislikes(String username, int page, int size) {
+        User user = userRepo.getUserByUsername(username);
+        Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
+        Page<Like> likes = likeRepo.findAllByUserAndType(user,"DISLIKE", pageable);
+        return likes.map(likeMapper::toLikeResponse);
+    }
+
+    public Page<LikeResponse> getAllReactionsByAdmin(int page, int size){
+        Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
+        Page<Like> result = likeRepo.findAll(pageable);
+        return result.map(likeMapper::toLikeResponse);
+    }
+
 
 }

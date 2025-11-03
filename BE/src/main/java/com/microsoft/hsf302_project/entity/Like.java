@@ -3,6 +3,8 @@ package com.microsoft.hsf302_project.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @Builder
@@ -24,4 +26,16 @@ public class Like {
 
     @Column(nullable = false)
     private String type; // LIKE or DISLIKE
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    @PrePersist
+    void  prePersist(){
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    @PreUpdate
+    void preUpdate(){
+        this.updatedAt = LocalDateTime.now();
+    }
 }
