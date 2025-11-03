@@ -3,6 +3,7 @@ package com.microsoft.hsf302_project.controller;
 import com.microsoft.hsf302_project.dto.request.PostRequest;
 import com.microsoft.hsf302_project.dto.request.PostUpdateRequest;
 import com.microsoft.hsf302_project.dto.response.ApiResponse;
+import com.microsoft.hsf302_project.dto.response.LikeResponse;
 import com.microsoft.hsf302_project.dto.response.PostResponse;
 
 import com.microsoft.hsf302_project.service.PostService;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -114,6 +116,9 @@ public class PostController {
 
     // nếu đã match được với nhau thì có theer xem tin private và public
 
+
+
+// hanh dong like
     @PostMapping("/{id}/like")
     public ApiResponse<Void> likePost(Authentication authentication, @PathVariable Long id) {
         String username = authentication.getName();
@@ -121,7 +126,7 @@ public class PostController {
         postService.likeOrDislikePost(id, user, "LIKE");
         return ApiResponse.<Void>builder().message("Đã like bài viết").build();
     }
-
+// hanh dong dislike
     @PostMapping("/{id}/dislike")
     public ApiResponse<Void> dislikePost(Authentication authentication, @PathVariable Long id) {
         String username = authentication.getName();
@@ -129,6 +134,65 @@ public class PostController {
         postService.likeOrDislikePost(id, user, "DISLIKE");
         return ApiResponse.<Void>builder().message("Đã dislike bài viết").build();
     }
+
+// lay danh sach toan bo like/dislike cua 1 user
+    @GetMapping("/reactions/history")
+    public ApiResponse<Page<LikeResponse>>  reactionHistory(Authentication authentication, @RequestParam(defaultValue = "10") int size,
+                                      @RequestParam(defaultValue = "0") int page
+                                      ){
+        String username = authentication.getName();
+        Page<LikeResponse> result = postService.getReactions(username,page,size);
+        return ApiResponse.<Page<LikeResponse>>builder()
+                .message("đã lấy toàn bộ lịch sử like/ dislike của 1 người dùng")
+                .data(result)
+                .build();
+    }
+
+    // lay danh sach like cua 1 user
+
+    @GetMapping("/likes/history")
+    public ApiResponse<Page<LikeResponse>>  getLikeHistory(Authentication authentication, @RequestParam(defaultValue = "10") int size,
+                                                        @RequestParam(defaultValue = "0") int page
+    ){
+        String username = authentication.getName();
+        Page<LikeResponse> result = postService.getTypeLikes(username,page,size);
+        return ApiResponse.<Page<LikeResponse>>builder()
+                .message("đã lấy toàn bộ lịch sử like của 1 người dùng")
+                .data(result)
+                .build();
+    }
+
+    // lay danh sach dislike cua 1 user
+    @GetMapping("/dislikes/history")
+    public ApiResponse<Page<LikeResponse>>  getDislikeHistory(Authentication authentication, @RequestParam(defaultValue = "10") int size,
+                                                           @RequestParam(defaultValue = "0") int page
+    ){
+        String username = authentication.getName();
+        Page<LikeResponse> result = postService.getTypeDislikes(username,page,size);
+        return ApiResponse.<Page<LikeResponse>>builder()
+                .message("đã lấy toàn bộ lịch sử dislike của người dùng")
+                .data(result)
+                .build();
+    }
+
+    //admin lay tat ca reactions trong he thong
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/reactions/history/admin")
+    public ApiResponse<Page<LikeResponse>> getAllReactionByAdmin(@RequestParam(defaultValue = "10")int size,
+
+                                                                 @RequestParam(defaultValue = "0")  int page
+                                                                 ){
+        Page<LikeResponse> result = postService.getAllReactionsByAdmin(page,size);
+        return  ApiResponse.<Page<LikeResponse>>builder()
+                .message("đã lấy tất cả bài đăng bài đăng")
+                .data(result)
+
+                .build();
+
+
+    }
+
+
 
 
 }
