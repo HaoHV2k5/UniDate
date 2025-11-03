@@ -6,6 +6,8 @@ import com.microsoft.hsf302_project.dto.request.*;
 
 import com.microsoft.hsf302_project.dto.response.UserListResponse;
 import com.microsoft.hsf302_project.dto.response.UserResponse;
+import com.microsoft.hsf302_project.dto.response.UserProfileResponse;
+import com.microsoft.hsf302_project.dto.response.PostResponse;
 import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
@@ -30,6 +32,8 @@ public class UserService {
     private final UserMapper userMapper;
     private final  OtpService otpService;
     private final AuthService authService;
+    private final PostService postService;
+    private final FriendService friendService;
 
 //    public List<UserResponse> getAllUsers() {
 //        return userRepo.findAll().stream()
@@ -152,6 +156,17 @@ public class UserService {
     public List<UserResponse> getAllUser(){
         List<User> list = userRepo.findAll();
         return userMapper.toUserListResponse(list);
+    }
+
+    public UserProfileResponse getUserProfileWithPosts(String usernameViewing, String usernameOwner) {
+        User user = userRepo.getUserByUsername(usernameOwner);
+        UserResponse userResponse = userMapper.toUserResponse(user);
+        boolean isOwner = usernameViewing != null && usernameViewing.equals(usernameOwner);
+        boolean isFriend = !isOwner && friendService.getFriendsByUsername(usernameOwner).stream()
+            .anyMatch(friend -> friend.getUsername().equals(usernameViewing));
+        boolean hasFullAccess = isOwner || isFriend;
+        List<PostResponse> posts = postService.getPostsForProfile(usernameOwner, hasFullAccess);
+        return new UserProfileResponse(userResponse, posts);
     }
 
 

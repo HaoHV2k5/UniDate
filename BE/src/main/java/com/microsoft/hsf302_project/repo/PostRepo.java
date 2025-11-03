@@ -48,4 +48,6 @@ public interface PostRepo extends JpaRepository<Post,Long> {
             @Param("status") PostStatus status,
             Pageable pageable);
 
+    @Query("SELECT p FROM Post p WHERE p.user.username = :username AND (:hasFullAccess = true OR p.isPrivate = false) And p.status = :status ORDER BY p.id DESC")
+    List<Post> findPostsForProfile(@Param("username") String username, @Param("hasFullAccess") boolean hasFullAccess, @Param("status") PostStatus status);
 }

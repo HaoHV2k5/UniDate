@@ -72,4 +72,12 @@ public class FriendService {
                 ).distinct().toList()
         );
     }
+
+    public List<UserResponse> getIncomingFriendRequests(String username) {
+        User user = userRepo.getUserByUsername(username);
+        List<FriendRequest> pending = friendRequestRepo.findByReceiverAndStatus(user, FriendRequest.Status.PENDING);
+        return userMapper.toUserListResponse(
+                pending.stream().map(FriendRequest::getSender).toList()
+        );
+    }
 }

@@ -3,13 +3,11 @@ package com.microsoft.hsf302_project.controller;
 import com.microsoft.hsf302_project.service.FriendService;
 import com.microsoft.hsf302_project.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.microsoft.hsf302_project.dto.response.UserResponse;
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/friend")
 @RequiredArgsConstructor
@@ -37,15 +35,7 @@ public class FriendController {
         return ApiResponse.<Void>builder().message("Đã từ chối lời mời kết bạn").build();
     }
 
-//    @GetMapping("/list")
-//    public ApiResponse<List<UserResponse>> getFriends(Authentication authentication) {
-//        String username = authentication.getName();
-//        List<UserResponse> friends = friendService.getFriends(username);
-//        return ApiResponse.<List<UserResponse>>builder()
-//                .data(friends)
-//                .message("Danh sách bạn bè thành công")
-//                .build();
-//    }
+  
 
     @GetMapping("/of/{username}")
     public ApiResponse<List<UserResponse>> getFriendsOfUser(@PathVariable String username) {
@@ -56,15 +46,13 @@ public class FriendController {
                 .build();
     }
 
-    // tu xem danh sach ban be cua mk
-    @GetMapping("/owner")
-    public ApiResponse<List<UserResponse>> getFriendsOwner(Authentication authentication) {
+    @GetMapping("/requests/incoming")
+    public ApiResponse<List<UserResponse>> getIncomingFriendRequests(Authentication authentication) {
         String username = authentication.getName();
-        log.warn(username);
-        List<UserResponse> friends = friendService.getFriendsByUsername(username);
+        List<UserResponse> list = friendService.getIncomingFriendRequests(username);
         return ApiResponse.<List<UserResponse>>builder()
-                .data(friends)
-                .message("Danh sách bạn bè của của mình")
+                .data(list)
+                .message("Danh sách lời mời kết bạn tới bạn")
                 .build();
     }
 }

@@ -107,7 +107,7 @@ public class PostController {
     @PutMapping("/{id}/private")
     public ApiResponse<PostResponse> privatePost(@Valid  Authentication authentication, @PathVariable Long id) {
         String username = authentication.getName();
-        PostResponse post = postService.hiddenPost(username,id);
+        PostResponse post = postService.privatePost(username,id);
         return  ApiResponse.<PostResponse>builder()
                 .message("đã hidden bài đăng thành công")
                 .data(post)
