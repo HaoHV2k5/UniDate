@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:3979",
-    //baseURL: "https://freddie-forestial-tiny.ngrok-free.dev/",
+    //baseURL: "http://localhost:3979",
+    baseURL: "https://freddie-forestial-tiny.ngrok-free.dev/",
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",
