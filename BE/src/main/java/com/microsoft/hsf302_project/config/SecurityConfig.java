@@ -113,7 +113,23 @@ public class SecurityConfig {
         return source;
 
     }
-
+//@Bean
+//public CorsConfigurationSource corsConfigurationSource() {
+//    CorsConfiguration configuration = new CorsConfiguration();
+//    configuration.setAllowedOrigins(Arrays.asList(
+//            "http://localhost:5173",
+//            "http://localhost:3000",
+//            "https://freddie-forestial-tiny.ngrok-free.dev",
+//            "https://unidate.vercel.app" // nếu FE deploy trên Vercel
+//    ));
+//    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//    configuration.addAllowedHeader("*");
+//    configuration.setAllowCredentials(true); // ⚠️ cần dòng này
+//
+//    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//    source.registerCorsConfiguration("/**", configuration);
+//    return source;
+//}
 
 
 }

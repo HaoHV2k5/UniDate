@@ -27,7 +27,7 @@ public class MailService {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, "UTF-8");
         messageHelper.setTo(to);
-        messageHelper.setSubject("🎉 Chào mừng bạn đến với EV Exchange!");
+        messageHelper.setSubject("🎉 Chào mừng bạn đến với UniDate!");
         messageHelper.setText(html,true);
         javaMailSender.send(mimeMessage);
 
@@ -65,7 +65,7 @@ public class MailService {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, "UTF-8");
         messageHelper.setTo(to);
-        messageHelper.setSubject("\uD83D\uDD14 [EV System] Tài khoản của bạn đã được cập nhật\n");
+        messageHelper.setSubject("\uD83D\uDD14 [UniDate] Tài khoản của bạn đã được cập nhật\n");
         messageHelper.setText(html,true);
         javaMailSender.send(mimeMessage);
 

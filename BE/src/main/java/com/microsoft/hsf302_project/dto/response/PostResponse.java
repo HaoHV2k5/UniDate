@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostResponse {
-
+    private Long id;
     private String content;
     private String title;
     private List<String> imageUrl;
@@ -20,6 +20,8 @@ public class PostResponse {
     private UserResponse user;
     private Boolean isPrivate;
     private PostStatus status;
+    private int likeCount;
+    private int dislikeCount;
 
 
 }

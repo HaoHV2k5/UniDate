@@ -18,7 +18,7 @@ export function useChat(userId: number | undefined, token: string | null, onMess
 
         console.log("🔄 Initializing WebSocket connection for user:", userId);
 
-        const socket = new SockJS("https://freddie-forestial-tiny.ngrok-free.dev/ws");
+        const socket = new SockJS("http://localhost:3979/ws");
         const client = new Client({
             webSocketFactory: () => socket,
             connectHeaders: {

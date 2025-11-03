@@ -52,8 +52,10 @@ private final LikeRepo likeRepo;
         }
         post.setImageUrl(imgUrls);
         postRepo.save(post);
-
-        return  postMapper.toPostResponse(post);
+        PostResponse response = postMapper.toPostResponse(post);
+        response.setLikeCount(likeRepo.countByPostAndType(post, "LIKE"));
+        response.setDislikeCount(likeRepo.countByPostAndType(post, "DISLIKE"));
+        return response;
 
     }
     // update post
@@ -64,8 +66,10 @@ private final LikeRepo likeRepo;
         }
         postMapper.updatePost(request, post);
         postRepo.save(post);
-
-        return  postMapper.toPostResponse(post);
+        PostResponse response = postMapper.toPostResponse(post);
+        response.setLikeCount(likeRepo.countByPostAndType(post, "LIKE"));
+        response.setDislikeCount(likeRepo.countByPostAndType(post, "DISLIKE"));
+        return response;
     }
 
     public void deletePost(String username, Long postId){
@@ -84,6 +88,10 @@ private final LikeRepo likeRepo;
 
         List<Post> list = postRepo.getPostHomePage(PostStatus.VISIBLE,false,lastId,pageable);
         List<PostResponse> postResponses = postMapper.toListPostResponse(list);
+        for (int i = 0; i < list.size(); i++) {
+            postResponses.get(i).setLikeCount(likeRepo.countByPostAndType(list.get(i), "LIKE"));
+            postResponses.get(i).setDislikeCount(likeRepo.countByPostAndType(list.get(i), "DISLIKE"));
+        }
         return postResponses;
     }
 
@@ -94,7 +102,10 @@ private final LikeRepo likeRepo;
         }
         post.setStatus(PostStatus.HIDDEN);
         postRepo.save(post);
-        return postMapper.toPostResponse(post);
+        PostResponse response = postMapper.toPostResponse(post);
+        response.setLikeCount(likeRepo.countByPostAndType(post, "LIKE"));
+        response.setDislikeCount(likeRepo.countByPostAndType(post, "DISLIKE"));
+        return response;
     }
 
     public PostResponse privatePost(String username, Long postId){
@@ -104,7 +115,10 @@ private final LikeRepo likeRepo;
         }
         post.setIsPrivate(true);
         postRepo.save(post);
-        return postMapper.toPostResponse(post);
+        PostResponse response = postMapper.toPostResponse(post);
+        response.setLikeCount(likeRepo.countByPostAndType(post, "LIKE"));
+        response.setDislikeCount(likeRepo.countByPostAndType(post, "DISLIKE"));
+        return response;
     }
 
     public Page<PostResponse> getPostByUserId(Long userId,int size, int page) {
