@@ -5,6 +5,7 @@ import com.microsoft.hsf302_project.dto.response.ApiResponse;
 import com.microsoft.hsf302_project.dto.response.ResetPasswordResponse;
 import com.microsoft.hsf302_project.dto.response.UserListResponse;
 import com.microsoft.hsf302_project.dto.response.UserResponse;
+import com.microsoft.hsf302_project.dto.response.UserProfileResponse;
 import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.service.MailService;
 import com.microsoft.hsf302_project.service.OtpService;
@@ -73,6 +74,19 @@ public class UserController {
                 .data(userDetail)
                 .message("User information retrieved successfully")
                 .build();
+    }
+
+    // @GetMapping("/profile/{username}")
+    // public ApiResponse<UserResponse> getProfile(@PathVariable String username) {
+    //     UserResponse response = userService.getUserByUsername(username);
+    //     return ApiResponse.<UserResponse>builder().data(response).message("Lấy thông tin cá nhân thành công").build();
+    // }
+
+    @GetMapping("/profile/{username}")
+    public ApiResponse<UserProfileResponse> getUserProfileExtended(@PathVariable String username, Authentication authentication) {
+        String viewing = authentication.getName();
+        UserProfileResponse profileResponse = userService.getUserProfileWithPosts(viewing,username);
+        return ApiResponse.<UserProfileResponse>builder().data(profileResponse).message("Thông tin cá nhân và bài viết").build();
     }
 
 

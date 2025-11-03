@@ -186,5 +186,15 @@ public class PostService {
         return result.map(likeMapper::toLikeResponse);
     }
 
+    public List<PostResponse> getPostsForProfile(String username, boolean hasFullAccess) {
+        List<Post> posts = postRepo.findPostsForProfile(username, hasFullAccess, PostStatus.VISIBLE);
+        List<PostResponse> responses = postMapper.toListPostResponse(posts);
+        for (int i = 0; i < posts.size(); i++) {
+            responses.get(i).setLikeCount(likeRepo.countByPostAndType(posts.get(i), "LIKE"));
+            responses.get(i).setDislikeCount(likeRepo.countByPostAndType(posts.get(i), "DISLIKE"));
+        }
+        return responses;
+    }
+
 
 }
