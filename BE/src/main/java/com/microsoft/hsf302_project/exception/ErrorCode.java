@@ -41,6 +41,8 @@ public enum ErrorCode {
 
     LOGIN_FAIL (1029, "Đăng nhập không thành công, mật khẩu không đúng", HttpStatus.NOT_FOUND),
     EMAIL_EXISTED (1030, "Email này đã được sử dụng", HttpStatus.NOT_FOUND),
+    FRIEND_REQUEST_NOT_FOUND(1040, "Lời mời kết bạn không tồn tại", HttpStatus.NOT_FOUND),
+    FRIEND_REQUEST_ALREADY_SENT(1041, "Đã gửi lời mời kết bạn trước đó", HttpStatus.CONFLICT),
 
 
 
