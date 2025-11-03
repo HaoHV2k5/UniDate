@@ -10,6 +10,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface UserMapper {
     @Mapping(source = "fullName", target = "fullName")
@@ -32,4 +34,6 @@ public interface UserMapper {
     @Mapping(target = "verified", ignore = true)
     @Mapping(target = "locked", ignore = true)
     void updateUserFromRequest(UpdateUserRequest request, @MappingTarget User user);
+
+    List<UserResponse> toUserListResponse(List<User> userList);
 }

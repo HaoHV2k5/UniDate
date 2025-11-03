@@ -31,11 +31,11 @@ public class UserService {
     private final  OtpService otpService;
     private final AuthService authService;
 
-    public List<UserResponse> getAllUsers() {
-        return userRepo.findAll().stream()
-                .map(userMapper::toUserResponse)
-                .toList();
-    }
+//    public List<UserResponse> getAllUsers() {
+//        return userRepo.findAll().stream()
+//                .map(userMapper::toUserResponse)
+//                .toList();
+//    }
 
     public UserResponse getUserById(Long id) {
         User user = userRepo.findById(id)
@@ -109,13 +109,13 @@ public class UserService {
         return user.getId();
     }
 
-    public UserListResponse updateUser(Long userId, UpdateUserRequest request) {
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateUserFromRequest(request, user);
         User savedUser = userRepo.save(user);
-        return userMapper.toUserListResponse(savedUser);
+        return userMapper.toUserResponse(savedUser);
     }
 
     public void updatePassword(User user,String password){
@@ -148,4 +148,11 @@ public class UserService {
         userRepo.save(user);
         return userMapper.toUserResponse(user);
     }
+
+    public List<UserResponse> getAllUser(){
+        List<User> list = userRepo.findAll();
+        return userMapper.toUserListResponse(list);
+    }
+
+
 }

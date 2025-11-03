@@ -29,12 +29,12 @@ public class UserController {
     private final MailService mailService;
 
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/all")
-    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
-        List<UserResponse> users = userService.getAllUsers();
-        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
-    }
+//    @PreAuthorize("hasRole('ADMIN')")
+//    @GetMapping("/admin/all")
+//    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
+//        List<UserResponse> users = userService.getAllUsers();
+//        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
+//    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{id}")
@@ -101,12 +101,12 @@ public class UserController {
 
     @PutMapping("/update")
 
-    public ApiResponse<UserListResponse> updateUser(Authentication authentication,
+    public ApiResponse<UserResponse> updateUser(Authentication authentication,
                                                     @RequestBody @Valid UpdateUserRequest request) {
         String name = authentication.getName();
         Long id = userService.getIdByUsername(name);
-        UserListResponse updatedUser = userService.updateUser(id, request);
-        return ApiResponse.<UserListResponse>builder()
+        UserResponse updatedUser = userService.updateUser(id, request);
+        return ApiResponse.<UserResponse>builder()
                 .data(updatedUser)
                 .message("User updated successfully")
                 .build();
@@ -120,6 +120,15 @@ public class UserController {
         return ApiResponse.<Boolean>builder().message("Password updated successfully").build();
     }
 
+
+    @GetMapping
+    public ApiResponse<List<UserResponse>> getAllUser(){
+        List<UserResponse> list = userService.getAllUser();
+        return  ApiResponse.<List<UserResponse>>builder()
+                .message("đã lấy tất cả user")
+                .data(list)
+                .build();
+    }
 
 
 
