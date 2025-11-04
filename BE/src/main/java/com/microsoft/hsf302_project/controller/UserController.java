@@ -144,6 +144,20 @@ public class UserController {
                 .build();
     }
 
+    // API: Gợi ý bạn bè cho người dùng hiện tại
+    @GetMapping("/suggest")
+    public ApiResponse<List<UserResponse>> suggestUsers(Authentication authentication,
+                                                        @RequestParam(defaultValue = "3") int size) {
+        String username = authentication.getName();
+        List<UserResponse> suggested = userService.suggestUsers(username, size);
+
+        ApiResponse<List<UserResponse>> response = new ApiResponse<>();
+        response.setCode(1000);
+        response.setMessage("Gợi ý " + suggested.size() + " người phù hợp nhất");
+        response.setData(suggested);
+        return response;
+    }
+
 
 
 }
