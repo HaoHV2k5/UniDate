@@ -129,6 +129,23 @@ const Login = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
+      const data = res.data.data;
+      toast.success("Đăng nhập thành công!");
+
+      // 🔹 Lưu thông tin user (từ backend trả về)
+      const user = data.user;
+      if (user) {
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("username", user.username);
+        localStorage.setItem("email", user.email);
+        localStorage.setItem("fullName", user.fullName || "");
+        localStorage.setItem("gender", user.gender || "");
+        localStorage.setItem("avatar", user.avatar || "");
+        localStorage.setItem("address", user.address || "");
+        localStorage.setItem("phone", user.phone || "");
+        localStorage.setItem("yob", user.yob || "");
+      }
+
       toast.success("Đăng nhập bằng Google thành công!");
       navigate("/discover");
     } catch (err) {

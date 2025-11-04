@@ -29,6 +29,7 @@ const App = () => (
           <Route path="/otp-verify" element={<OTPVerify />} />
           <Route path="/login" element={<Login />} />
           <Route path="/discover" element={<Discover />} />
+          <Route path="/profile/:username" element={<Profile />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/chat" element={<Chat />} />

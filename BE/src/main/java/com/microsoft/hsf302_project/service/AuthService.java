@@ -135,6 +135,9 @@ public class AuthService {
                     .password("abc")
                     .fullName(acc.getName())
                     .avatar(acc.getPicture())
+                    .role("USER")
+                    .username(acc.getEmail())
+                    .isVerified(true)
                     .build();
             userRepo.save(newUser);
 
