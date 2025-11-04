@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.microsoft.hsf302_project.dto.response.UserResponse;
 import com.microsoft.hsf302_project.mapper.UserMapper;
@@ -79,5 +81,37 @@ public class FriendService {
         return userMapper.toUserListResponse(
                 pending.stream().map(FriendRequest::getSender).toList()
         );
+    }
+
+    // Lấy danh sách tất cả username đã có quan hệ (bạn bè hoặc đang chờ) với currentUser
+    public Set<String> getAllRelatedUsernames(String username) {
+        User me = userRepo.getUserByUsername(username);
+        Set<String> related = new HashSet<>();
+
+        List<FriendRequest> received = friendRequestRepo.findByReceiverAndStatus(me, FriendRequest.Status.ACCEPTED);
+        for (FriendRequest fr : received) {
+            related.add(fr.getSender().getUsername());
+        }
+
+        List<FriendRequest> sent = friendRequestRepo.findBySenderAndStatus(me, FriendRequest.Status.ACCEPTED);
+        for (FriendRequest fr : sent) {
+            related.add(fr.getReceiver().getUsername());
+        }
+
+        // Lấy thêm những lời mời đang chờ (pending)
+        List<FriendRequest> receivedPending = friendRequestRepo.findByReceiverAndStatus(me, FriendRequest.Status.PENDING);
+        for (FriendRequest fr : receivedPending) {
+            related.add(fr.getSender().getUsername());
+        }
+
+        List<FriendRequest> sentPending = friendRequestRepo.findBySenderAndStatus(me, FriendRequest.Status.PENDING);
+        for (FriendRequest fr : sentPending) {
+            related.add(fr.getReceiver().getUsername());
+        }
+
+        // Thêm chính mình để loại ra
+        related.add(username);
+
+        return related;
     }
 }

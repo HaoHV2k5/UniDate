@@ -19,7 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 
 
 @Service
@@ -169,5 +170,80 @@ public class UserService {
         return new UserProfileResponse(userResponse, posts);
     }
 
+    // Gợi ý bạn bè (3 người phù hợp nhất)
+    public List<UserResponse> suggestUsers(String currentUsername, int size) {
+        User me = userRepo.getUserByUsername(currentUsername);
+        Set<String> relatedUsernames = friendService.getAllRelatedUsernames(currentUsername);
+
+        List<User> allUsers = userRepo.findAll();
+        List<User> candidateList = new ArrayList<>();
+
+        // Bước 1: Lọc các user hợp lệ
+        for (User u : allUsers) {
+            if (relatedUsernames.contains(u.getUsername())) {
+                continue; // đã có quan hệ hoặc là chính mình
+            }
+            if (u.isLocked()) {
+                continue;
+            }
+            if (!u.isVerified()) {
+                continue;
+            }
+            if (u.getRole() != null && u.getRole().equalsIgnoreCase("ADMIN")) {
+                continue;
+            }
+            candidateList.add(u);
+        }
+
+        // Bước 2: Sắp xếp theo mức độ phù hợp
+        // Ưu tiên khác giới, sau đó gần tuổi nhất
+        Collections.sort(candidateList, new Comparator<User>() {
+            @Override
+            public int compare(User a, User b) {
+                boolean aOpposite = isOppositeGender(me.getGender(), a.getGender());
+                boolean bOpposite = isOppositeGender(me.getGender(), b.getGender());
+
+                // Ưu tiên khác giới trước
+                if (aOpposite && !bOpposite) return -1;
+                if (!aOpposite && bOpposite) return 1;
+
+                // Nếu cùng giới tính, so sánh khoảng cách tuổi
+                int aAgeDiff = getAgeDistance(me.getYob(), a.getYob());
+                int bAgeDiff = getAgeDistance(me.getYob(), b.getYob());
+                if (aAgeDiff < bAgeDiff) return -1;
+                if (aAgeDiff > bAgeDiff) return 1;
+
+                // Cuối cùng so sánh theo ID để ổn định
+                return Long.compare(a.getId(), b.getId());
+            }
+        });
+
+        // Bước 3: Lấy ra 3 người đầu tiên (hoặc ít hơn nếu danh sách ngắn)
+        List<UserResponse> result = new ArrayList<>();
+        int limit = Math.min(size, candidateList.size());
+        for (int i = 0; i < limit; i++) {
+            User user = candidateList.get(i);
+            UserResponse response = userMapper.toUserResponse(user);
+            result.add(response);
+        }
+
+        return result;
+    }
+
+    // Hàm kiểm tra giới tính khác nhau (M ↔ F)
+    private boolean isOppositeGender(String g1, String g2) {
+        if (g1 == null || g2 == null) return false;
+        if (g1.equalsIgnoreCase("M") && g2.equalsIgnoreCase("F")) return true;
+        if (g1.equalsIgnoreCase("F") && g2.equalsIgnoreCase("M")) return true;
+        return false;
+    }
+
+    // Tính độ chênh lệch tuổi (nếu thiếu dữ liệu trả về giá trị lớn)
+    private int getAgeDistance(LocalDate yob1, LocalDate yob2) {
+        if (yob1 == null || yob2 == null) return 9999;
+        int year1 = yob1.getYear();
+        int year2 = yob2.getYear();
+        return Math.abs(year1 - year2);
+    }
 
 }
