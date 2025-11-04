@@ -5,27 +5,101 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Plus } from "lucide-react";
-import { Post } from "@/data/mockPosts";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/api/api";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
+import { useNavigate } from "react-router-dom";
+
+// Định nghĩa interface cho dữ liệu từ API
+interface ApiPost {
+  id: number;
+  content: string;
+  title: string;
+  imageUrl: string[];
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    phone: string | null;
+    fullName: string;
+    gender: string | null;
+    yob: string | null;
+    avatar: string;
+    address: string | null;
+  };
+  isPrivate: boolean;
+  status: string;
+  likeCount: number;
+  dislikeCount: number;
+}
+
+// Interface cho Post trong component
+interface Post {
+  id: number;
+  content: string;
+  title: string;
+  image: string | null;
+  timestamp: string;
+  likes: number;
+  comments: number;
+  isLiked: boolean;
+  author: {
+    name: string;
+    avatar: string;
+    major: string;
+    username: string;
+  };
+}
 
 const Discover = () => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
-
   const [isFirstLoadDone, setIsFirstLoadDone] = useState(false);
+
+  // Hàm chuyển đổi từ ApiPost sang Post
+  const convertApiPostToPost = (apiPost: ApiPost): Post => {
+    return {
+      id: apiPost.id,
+      content: apiPost.content,
+      title: apiPost.title,
+      image: apiPost.imageUrl?.[0] || null, // Lấy ảnh đầu tiên
+      timestamp: new Date(apiPost.createdAt).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      likes: apiPost.likeCount,
+      comments: 0, // API không trả về số comments, có thể set mặc định
+      isLiked: false, // Mặc định chưa like
+      author: {
+        name: apiPost.user.fullName,
+        avatar: apiPost.user.avatar,
+        major: "Không rõ ngành", // API không có thông tin này
+        username: apiPost.user.username
+      }
+    };
+  };
 
   const loadInitialPosts = async () => {
     setLoading(true);
     try {
       const res = await api.get("/api/post");
-      setPosts(res.data.data || []);
-      setIsFirstLoadDone(true); // ✅ chỉ bật khi load xong
-    } catch {
+      const apiPosts: ApiPost[] = res.data.data || [];
+
+      // Chuyển đổi dữ liệu từ API sang định dạng Post
+      const convertedPosts = apiPosts.map(convertApiPostToPost);
+      setPosts(convertedPosts);
+      setIsFirstLoadDone(true);
+    } catch (error) {
+      console.error("Error loading posts:", error);
       toast.error("Không thể tải bài viết");
     } finally {
       setLoading(false);
@@ -36,7 +110,6 @@ const Discover = () => {
     loadInitialPosts();
   }, []);
 
-
   const loadMorePosts = useCallback(async () => {
     if (loading || !hasMore) return;
 
@@ -44,11 +117,13 @@ const Discover = () => {
     try {
       const lastId = posts[posts.length - 1]?.id;
       const res = await api.get("/api/post", { params: { lastId, size: 10 } });
-      const newPosts = res.data.data || [];
+      const apiPosts: ApiPost[] = res.data.data || [];
+      const newPosts = apiPosts.map(convertApiPostToPost);
 
       if (newPosts.length === 0) setHasMore(false);
       else setPosts((prev) => [...prev, ...newPosts]);
-    } catch {
+    } catch (error) {
+      console.error("Error loading more posts:", error);
       toast.error("Không thể tải thêm bài viết");
     } finally {
       setLoading(false);
@@ -56,7 +131,7 @@ const Discover = () => {
   }, [loading, hasMore, posts]);
 
   useEffect(() => {
-    if (!isFirstLoadDone) return; // ❗ ngăn observer chạy sớm
+    if (!isFirstLoadDone) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -77,18 +152,45 @@ const Discover = () => {
     };
   }, [loadMorePosts, hasMore, loading, isFirstLoadDone]);
 
-  const handleLike = (postId: number) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-            ...post,
-            isLiked: !post.isLiked,
-            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-          }
-          : post
-      )
-    );
+  const handleLike = async (postId: number) => {
+    try {
+      const post = posts.find(p => p.id === postId);
+
+      if (post?.isLiked) {
+        // Nếu đã like thì bỏ like (dislike)
+        await api.post(`/api/post/${postId}/dislike`);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                ...p,
+                isLiked: false,
+                likes: p.likes - 1,
+              }
+              : p
+          )
+        );
+        toast.success("Đã bỏ like bài viết");
+      } else {
+        // Nếu chưa like thì like
+        await api.post(`/api/post/${postId}/like`);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                ...p,
+                isLiked: true,
+                likes: p.likes + 1,
+              }
+              : p
+          )
+        );
+        toast.success("Đã like bài viết");
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+      toast.error("Không thể thực hiện thao tác");
+    }
   };
 
   const handlePostCreated = (newPost: Post) => {
@@ -96,21 +198,41 @@ const Discover = () => {
   };
 
   const handleComment = () => toast("Tính năng bình luận đang phát triển");
-  const handleShare = () => toast("Đã sao chép link bài viết");
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast("Đã sao chép link bài viết");
+    } catch (error) {
+      toast("Không thể sao chép link");
+    }
+  };
 
   const PostCard = ({ post }: { post: Post }) => {
     const authorName = post.author?.name || "Ẩn danh";
     const avatarSrc = post.author?.avatar || "/default-avatar.png";
     const authorMajor = post.author?.major || "Không rõ ngành";
 
+    const goToProfile = (username?: string) => {
+      if (!username) return;
+      navigate(`/profile/${encodeURIComponent(username)}`);
+    };
+
     return (
       <Card className="shadow-card hover-lift transition-all">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={avatarSrc} alt={authorName} />
-              <AvatarFallback>{authorName[0]}</AvatarFallback>
-            </Avatar>
+            <button
+              onClick={() => goToProfile(post.author.username)}
+              className="p-0 rounded-full focus:outline-none"
+              aria-label={`Xem profile ${authorName}`}
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={avatarSrc} alt={authorName} />
+                <AvatarFallback>{authorName[0]}</AvatarFallback>
+              </Avatar>
+            </button>
+
             <div className="flex-1">
               <h3 className="font-semibold text-sm">{authorName}</h3>
               <p className="text-xs text-muted-foreground">
@@ -119,14 +241,22 @@ const Discover = () => {
             </div>
           </div>
 
+          {post.title && (
+            <h2 className="font-bold text-lg">{post.title}</h2>
+          )}
+
           <p className="text-sm leading-relaxed">{post.content}</p>
 
           {post.image && (
-            <div className="rounded-lg overflow-hidden -mx-4">
+            <div className="rounded-lg overflow-hidden">
               <img
                 src={post.image}
                 alt="Post image"
-                className="w-full object-cover max-h-[400px]"
+                className="w-full h-auto object-cover rounded-lg max-h-[500px]"
+                onError={(e) => {
+                  // Xử lý khi ảnh lỗi
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
           )}
@@ -144,8 +274,7 @@ const Discover = () => {
               onClick={() => handleLike(post.id)}
             >
               <Heart
-                className={`h-4 w-4 mr-2 ${post.isLiked ? "fill-current" : ""
-                  }`}
+                className={`h-4 w-4 mr-2 ${post.isLiked ? "fill-current" : ""}`}
               />
               Thích
             </Button>
@@ -203,7 +332,8 @@ const Discover = () => {
             </Button>
           }
         />
-        {posts.length === 0 && loading ? (
+
+        {!isFirstLoadDone && loading ? (
           <>
             <PostSkeleton />
             <PostSkeleton />
@@ -232,6 +362,12 @@ const Discover = () => {
 
             <div ref={observerTarget} className="h-4" />
           </>
+        )}
+
+        {isFirstLoadDone && posts.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Chưa có bài viết nào</p>
+          </div>
         )}
       </main>
 
