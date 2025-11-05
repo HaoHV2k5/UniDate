@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { loginWithGoogle } from "@/services/firebase"
+import { loginWithGoogle } from "@/firebase/firebase";
 import { Separator } from "@/components/ui/separator";
 import api from "@/api/api";
 
