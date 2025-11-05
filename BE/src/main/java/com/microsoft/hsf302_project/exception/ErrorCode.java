@@ -43,6 +43,9 @@ public enum ErrorCode {
     EMAIL_EXISTED (1030, "Email này đã được sử dụng", HttpStatus.NOT_FOUND),
     FRIEND_REQUEST_NOT_FOUND(1040, "Lời mời kết bạn không tồn tại", HttpStatus.NOT_FOUND),
     FRIEND_REQUEST_ALREADY_SENT(1041, "Đã gửi lời mời kết bạn trước đó", HttpStatus.CONFLICT),
+    NO_PERMISSION_VIEW(1042, "Bạn chưa có quyền xem album này", HttpStatus.CONFLICT),
+    DUPLICATE_REQUEST_VIEW(1043, "Bạn đã gửi yêu cầu truy cập album này rồi", HttpStatus.CONFLICT),
+    NOT_OWNER_ALBUM(1044, "Bạn không phải chủ sở hữu album này!", HttpStatus.CONFLICT),
 
 
 
