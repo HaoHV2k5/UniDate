@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// src/pages/ChatFriends.tsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { MobileNav } from "@/components/MobileNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,297 +7,170 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Send, Calendar, Check, CheckCheck, Circle } from "lucide-react";
+import { Send, Search } from "lucide-react";
 import { toast } from "sonner";
-import { useChat } from "@/hooks/useChat";
-import api from "@/api/api"; // <-- axios instance
+import api from "@/api/api";
+import { useChatFirebase } from "@/hooks/useChatFirebase";
 
-type User = {
-  id: number;
-  name: string; // display name (mapped from fullName or username)
-  avatar?: string;
-  username?: string;
+type Friend = {
+  id: number | null;
+  username: string;
   fullName?: string;
+  avatar?: string;
+  email?: string;
 };
 
-type Msg = {
-  id?: string | number;
-  senderId: number;
-  receiverId: number;
-  content: string;
-  timestamp: string;
-  read?: boolean;
-  tempId?: string; // ID tạm thời để theo dõi tin nhắn chưa được server xác nhận
-};
+export default function ChatFriends() {
+  const storedUsername = localStorage.getItem("username") || "";
+  const currentUser = storedUsername;
 
-const Chat = () => {
-  const myId = Number(localStorage.getItem("userId")) || 1;
-  const token = localStorage.getItem("accessToken");
-
-  // --- users từ API ---
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-  // --- Tin nhắn lưu theo cặp user (bắt đầu rỗng) ---
-  const [conversations, setConversations] = useState<Record<string, Msg[]>>({});
-
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [queryText, setQueryText] = useState("");
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
-  const [typingUserId, setTypingUserId] = useState<number | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
-  // --- Hàm tạo conversation key từ 2 user ID ---
-  const getConversationKey = (user1Id: number, user2Id: number): string => {
-    const sortedIds = [user1Id, user2Id].sort((a, b) => a - b);
-    return `${sortedIds[0]}_${sortedIds[1]}`;
-  };
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  // --- current conversation key & messages ---
-  const currentConversationKey = selectedUser ? getConversationKey(myId, selectedUser.id) : "";
-  const messages = useMemo(() => (currentConversationKey ? conversations[currentConversationKey] || [] : []), [conversations, currentConversationKey]);
+  // hook firebase chat: truyền currentUser và callback setMessages
+  const { sendMessage, subscribeMessages } = useChatFirebase(currentUser, setMessages);
 
-  // ---------- STOMP hook integration ----------
-  const onMessage = useCallback((incoming: any) => {
-    console.log("📩 Processing incoming message:", incoming);
-
-    let senderId: number, receiverId: number;
-
-    if (incoming.sender && incoming.to) {
-      senderId = parseInt(incoming.sender);
-      receiverId = parseInt(incoming.to);
-    } else {
-      senderId = incoming.senderId;
-      receiverId = incoming.receiverId;
-    }
-
-    const conversationKey = getConversationKey(senderId, receiverId);
-
-    setConversations(prev => {
-      const copy = { ...prev };
-      const arr = copy[conversationKey] ? [...copy[conversationKey]] : [];
-
-      const isDuplicate = arr.some(msg =>
-        msg.id === incoming.id ||
-        (msg.tempId && incoming.tempId && msg.tempId === incoming.tempId)
-      );
-
-      if (!isDuplicate) {
-        arr.push({
-          id: incoming.id ?? `server-${Date.now()}`,
-          senderId: senderId,
-          receiverId: receiverId,
-          content: incoming.content,
-          timestamp: incoming.timestamp || new Date().toISOString(),
-          read: incoming.read ?? false,
-        });
-        copy[conversationKey] = arr;
-      }
-
-      return copy;
-    });
-  }, []);
-
-  const onTyping = useCallback((payload: any) => {
-    console.log("⌨️ Typing event received:", payload);
-    if (!payload) return;
-    const sender = payload.senderId ?? parseInt(payload.sender ?? -1);
-    const receiver = payload.receiverId ?? parseInt(payload.receiver ?? -1);
-    if (sender && receiver === myId) {
-      setTypingUserId(sender);
-      setTimeout(() => {
-        setTypingUserId(curr => (curr === sender ? null : curr));
-      }, 2000);
-    }
-  }, [myId]);
-
-  const { sendMessage, sendTyping } = useChat(myId, token, onMessage, onTyping);
-
-  // ---------- Fetch users từ API (axios) ----------
+  // fetch friends 
   useEffect(() => {
-    const fetchUsers = async () => {
+    if (!storedUsername) return;
+    (async () => {
       try {
-        const res = await api.get('api/users');
-        // backend có thể trả body trực tiếp hoặc nằm trong res.data.data
+        const res = await api.get(`/friends/of/${encodeURIComponent(storedUsername)}`);
         const payload = res.data?.data ?? res.data;
         const list = Array.isArray(payload) ? payload : [];
-
-        const mapped: User[] = list.map((u: any) => ({
-          id: u.id,
-          name: u.fullName ?? u.username ?? u.name ?? `User ${u.id}`,
-          avatar: u.avatar,
+        const mapped = list.map((u: any) => ({
+          id: u.id ?? null,
           username: u.username,
-          fullName: u.fullName,
+          fullName: u.fullName ?? u.username,
+          avatar: u.avatar,
+          email: u.email,
         }));
-
-        const other = mapped.filter(u => u.id !== myId);
-        setUsers(other);
-        if (!selectedUser && other.length > 0) setSelectedUser(other[0]);
+        setFriends(mapped);
+        if (!selectedFriend && mapped.length) setSelectedFriend(mapped[0]);
       } catch (err) {
-        console.error('Error fetching users:', err);
+        console.error("Lỗi fetch friends:", err);
+        toast.error("Không lấy được danh sách bạn bè");
       }
-    };
+    })();
+  }, [storedUsername]);
 
-    fetchUsers();
-  }, [token, myId]);
-
-  // ---------- typing debounce ----------
-  const typingTimer = useRef<number | undefined>(undefined);
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-
-    if (typingTimer.current) window.clearTimeout(typingTimer.current);
-
-    if (e.target.value.trim() && selectedUser) {
-      sendTyping({ receiverId: selectedUser.id, senderId: myId });
-    }
-
-    typingTimer.current = window.setTimeout(() => {
-      typingTimer.current = undefined;
-    }, 800);
-  };
-
-  // ---------- send handler ----------
-  const handleSend = () => {
-    const text = input.trim();
-    if (!text) return;
-    if (!selectedUser) {
-      toast.error('Vui lòng chọn người để gửi tin nhắn');
-      return;
-    }
-
-    const tempId = `t-${Date.now()}`;
-    const timestamp = new Date().toISOString();
-    const payload: Msg = {
-      id: tempId,
-      senderId: myId,
-      receiverId: selectedUser.id,
-      content: text,
-      timestamp,
-      read: false,
-      tempId: tempId
-    };
-
-    // Optimistic update
-    const conversationKey = getConversationKey(myId, selectedUser.id);
-    setConversations(prev => {
-      const copy = { ...prev };
-      const arr = copy[conversationKey] ? [...copy[conversationKey]] : [];
-      arr.push(payload);
-      copy[conversationKey] = arr;
-      return copy;
-    });
-
-    // Send via websocket
-    sendMessage({ receiverId: selectedUser.id, content: text, tempId });
-
-    setInput('');
-  };
 
   useEffect(() => {
-    setTypingUserId(null);
-  }, [selectedUser?.id]);
+    setMessages([]);
+    if (!selectedFriend) return;
+    const friendKey = selectedFriend.username;
+    const unsub = subscribeMessages(friendKey);
+    // subscribeMessages trả về hàm unsubscribe (theo hook gốc)
+    return () => {
+      if (typeof unsub === "function") unsub();
+    };
+  }, [selectedFriend?.username, subscribeMessages]);
 
-  // ---------- Tạo danh sách conversations cho UI ----------
-  const conversationList = useMemo(() => {
-    return users.slice(0, 5).map((user) => {
-      const convKey = getConversationKey(myId, user.id);
-      const convMessages = conversations[convKey] || [];
-      const lastMessage = convMessages.slice(-1)[0];
+  // auto-scroll
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages.length]);
 
-      return {
-        user,
-        lastMessage: lastMessage?.content ?? "Chưa có tin nhắn",
-        timestamp: lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit"
-        }) : "Mới",
-        unread: convMessages.filter(msg => msg.senderId === user.id && !msg.read).length,
-        online: false,
-      };
-    });
-  }, [users, conversations, myId]);
+  const filtered = useMemo(
+    () => friends.filter(f => (f.fullName || f.username).toLowerCase().includes(queryText.toLowerCase())),
+    [friends, queryText]
+  );
 
-  const handleSendDateProposal = () => {
-    if (!selectedUser) {
-      toast.error('Chọn người trước khi gửi đề xuất');
-      return;
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || !selectedFriend) return;
+    try {
+      await sendMessage(selectedFriend.username, text);
+      setInput("");
+    } catch (e) {
+      console.error("send msg err", e);
+      toast.error("Gửi tin nhắn thất bại");
     }
-    toast.success("Đã gửi đề xuất lịch hẹn!");
   };
 
-  // 👇 DEBUG COMPONENT
-  const DebugPanel = () => (
-    <div className="fixed top-4 left-4 bg-background border rounded-lg p-3 shadow-lg z-50 max-w-xs">
-      <div className="flex items-center gap-2 mb-2">
-        <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' :
-          connectionStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
-          }`} />
-        <span className="text-sm font-medium">User {myId}</span>
-      </div>
-      <div className="text-xs space-y-1 text-muted-foreground">
-        <div>Chat với: <strong>User {selectedUser?.id ?? '—'}</strong></div>
-        <div>Conversation: <code>{currentConversationKey || '—'}</code></div>
-        <div>Tin nhắn: {messages.length}</div>
-        {typingUserId && <div>⌨️ User {typingUserId} đang gõ...</div>}
-      </div>
-    </div>
-  );
+  const formatTime = (ts: any) => {
+    try {
+      // ts có thể là firebase.Timestamp hoặc ISO string
+      if (!ts) return "";
+      if (ts.toDate) return ts.toDate().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+      const d = new Date(ts);
+      return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-soft pb-20 md:pb-0">
       <Navbar />
       <main className="container px-4 py-8 max-w-7xl">
-        <DebugPanel />
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-          {/* Conversations List */}
+          {/* LEFT: Friends */}
           <Card className="lg:col-span-1 shadow-card overflow-hidden flex flex-col">
             <CardHeader className="border-b">
-              <CardTitle>Tin nhắn</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Bạn bè</CardTitle>
+                <div className="text-sm text-muted-foreground">{friends.length} bạn</div>
+              </div>
             </CardHeader>
+
+            <div className="p-3 border-b">
+              <div className="relative">
+                <Input
+                  placeholder="Tìm bạn..."
+                  value={queryText}
+                  onChange={(e) => setQueryText(e.target.value)}
+                  className="pl-10"
+                />
+                <Search className="absolute left-3 top-3 text-muted-foreground" />
+              </div>
+            </div>
+
             <CardContent className="flex-1 overflow-auto p-0">
               <div className="divide-y">
-                {conversationList.length === 0 && (
-                  <div className="p-4 text-sm text-muted-foreground">Không có người dùng — hoặc đang tải...</div>
+                {filtered.length === 0 && (
+                  <div className="p-4 text-sm text-muted-foreground">Không tìm thấy bạn bè — Lêu lêu ko có bạn</div>
                 )}
 
-                {conversationList.map((conv) => (
+                {filtered.map(friend => (
                   <button
-                    key={conv.user.id}
-                    onClick={() => setSelectedUser(conv.user)}
-                    className={`w-full p-4 flex items-start gap-3 hover:bg-accent transition-colors ${selectedUser?.id === conv.user.id ? "bg-accent" : ""}`}
-                  >
-                    <div className="relative">
-                      <Avatar>
-                        <AvatarImage src={conv.user.avatar} alt={conv.user.name} />
-                        <AvatarFallback>{conv.user.name[0]}</AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="flex-1 text-left min-w-0">
+                    key={friend.id ?? friend.username}
+                    onClick={() => setSelectedFriend(friend)}
+                    className={`w-full p-4 flex items-start gap-3 hover:bg-accent transition-colors text-left ${selectedFriend?.username === friend.username ? 'bg-accent' : ''}`}>
+                    <Avatar>
+                      <AvatarImage src={friend.avatar} alt={friend.fullName ?? friend.username} />
+                      <AvatarFallback>{(friend.fullName || friend.username || '?')[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-1">
-                        <span className="font-semibold truncate">{conv.user.name}</span>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{conv.timestamp}</span>
+                        <span className="font-semibold truncate">{friend.fullName ?? friend.username}</span>
+                        <span className="text-xs text-muted-foreground">{/* optional */}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">{conv.lastMessage}</p>
+                      <p className="text-sm text-muted-foreground truncate">{friend.email ?? friend.username}</p>
                     </div>
-                    {conv.unread > 0 && (
-                      <Badge variant="default" className="shrink-0">{conv.unread}</Badge>
-                    )}
+                    <Badge variant="default" className="shrink-0">Chat</Badge>
                   </button>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Chat Window */}
+          {/* RIGHT: Chat */}
           <Card className="lg:col-span-2 shadow-card overflow-hidden flex flex-col">
             <CardHeader className="border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    {selectedUser ? (
+                    {selectedFriend ? (
                       <>
-                        <AvatarImage src={selectedUser.avatar} alt={selectedUser.name} />
-                        <AvatarFallback>{selectedUser.name[0]}</AvatarFallback>
+                        <AvatarImage src={selectedFriend.avatar} alt={selectedFriend.fullName} />
+                        <AvatarFallback>{(selectedFriend.fullName || selectedFriend.username || '?')[0]}</AvatarFallback>
                       </>
                     ) : (
                       <AvatarFallback>?</AvatarFallback>
@@ -304,55 +178,53 @@ const Chat = () => {
                   </Avatar>
 
                   <div>
-                    <h3 className="font-semibold">{selectedUser ? selectedUser.name : 'Chọn người để bắt đầu'}</h3>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                      {typingUserId === selectedUser?.id ? "Đang gõ..." : selectedUser ? "Đang hoạt động" : "—"}
-                    </p>
+                    <h3 className="font-semibold">{selectedFriend ? (selectedFriend.fullName ?? selectedFriend.username) : 'Chọn bạn để bắt đầu'}</h3>
+                    <p className="text-xs text-muted-foreground">{selectedFriend ? 'Đang hoạt động' : '—'}</p>
                   </div>
                 </div>
 
-                <Button variant="outline" size="sm" onClick={handleSendDateProposal} disabled={!selectedUser}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Đề xuất hẹn
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => toast.success('Đã gửi đề xuất lịch!')} disabled={!selectedFriend}>
+                    Đề xuất hẹn
+                  </Button>
+                </div>
               </div>
             </CardHeader>
 
-            <CardContent className="flex-1 overflow-auto p-4 space-y-4">
+            <CardContent className="flex-1 overflow-auto p-4 space-y-4" ref={listRef}>
+              {messages.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground">Chưa có tin nhắn — bắt đầu cuộc trò chuyện nào!</div>
+              )}
+
               {messages.map((msg) => {
-                const isOwn = msg.senderId === myId;
+                const isOwn = (msg.sender === currentUser) || (msg.senderId && String(msg.senderId) === String(currentUser));
                 return (
-                  <div key={msg.tempId || msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                  <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <div className="max-w-[70%] space-y-1">
-                      <div className={`rounded-2xl px-4 py-2 ${isOwn ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                      <div className={`rounded-2xl px-4 py-2 ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                         <p className="text-sm">{msg.content}</p>
                       </div>
                       <div className="flex items-center gap-1 justify-end px-2">
-                        <span className="text-xs text-muted-foreground">{new Date(msg.timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
-                        {isOwn && (msg.read ? (<CheckCheck className="h-3 w-3 text-primary" />) : (<Check className="h-3 w-3 text-muted-foreground" />))}
+                        <span className="text-xs text-muted-foreground">{formatTime(msg.timestamp)}</span>
                       </div>
                     </div>
                   </div>
                 );
               })}
 
-              {messages.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground">Chưa có tin nhắn — bắt đầu cuộc trò chuyện nào!</div>
-              )}
             </CardContent>
 
             <div className="border-t p-4">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Input
-                  placeholder="Nhập tin nhắn..."
+                  placeholder={selectedFriend ? `Nhắn cho ${selectedFriend.fullName ?? selectedFriend.username}...` : 'Chọn một bạn để nhắn'}
                   value={input}
-                  onChange={handleInputChange}
-                  onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   className="flex-1"
-                  disabled={!selectedUser}
+                  disabled={!selectedFriend}
                 />
-                <Button onClick={handleSend} variant="hero" disabled={!input.trim() || !selectedUser}>
+                <Button onClick={handleSend} variant="hero" disabled={!input.trim() || !selectedFriend}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
@@ -363,6 +235,4 @@ const Chat = () => {
       <MobileNav />
     </div>
   );
-};
-
-export default Chat;
+}
