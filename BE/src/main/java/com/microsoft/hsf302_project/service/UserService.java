@@ -166,8 +166,14 @@ public class UserService {
         boolean isFriend = !isOwner && friendService.getFriendsByUsername(usernameOwner).stream()
             .anyMatch(friend -> friend.getUsername().equals(usernameViewing));
         boolean hasFullAccess = isOwner || isFriend;
+
         List<PostResponse> posts = postService.getPostsForProfile(usernameOwner, hasFullAccess);
-        return new UserProfileResponse(userResponse, posts);
+
+        return UserProfileResponse.builder()
+                            .user(userResponse)
+                            .posts(posts)
+                            .isOwner(hasFullAccess)
+                            .build();
     }
 
     // Gợi ý bạn bè (3 người phù hợp nhất)

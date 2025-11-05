@@ -52,6 +52,7 @@ public class User {
     private String gender;
     private LocalDate yob;
 
+//    private boolean isOwner;
 
 
 }

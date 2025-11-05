@@ -24,4 +24,6 @@ public class UserResponse {
     private LocalDate yob;
     private String avatar;
     private String address;
+
+
 }
