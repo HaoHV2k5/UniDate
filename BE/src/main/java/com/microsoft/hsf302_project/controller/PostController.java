@@ -278,6 +278,24 @@ public class PostController {
             .build();
     }
 
+    @GetMapping("/user/{userId}/likes")
+    public ApiResponse<Page<LikeResponse>> getLikeHistoryByUserId(@PathVariable Long userId, @RequestParam(defaultValue = "10") int size,
+                                                        @RequestParam(defaultValue = "0") int page) {
+        Page<LikeResponse> result = postService.getTypeLikesByUserId(userId, page, size);
+        return ApiResponse.<Page<LikeResponse>>builder()
+                .message("đã lấy toàn bộ lịch sử like theo userId")
+                .data(result)
+                .build();
+    }
+    @GetMapping("/user/{userId}/dislikes")
+    public ApiResponse<Page<LikeResponse>> getDislikeHistoryByUserId(@PathVariable Long userId, @RequestParam(defaultValue = "10") int size,
+                                                        @RequestParam(defaultValue = "0") int page) {
+        Page<LikeResponse> result = postService.getTypeDislikesByUserId(userId, page, size);
+        return ApiResponse.<Page<LikeResponse>>builder()
+                .message("đã lấy toàn bộ lịch sử dislike theo userId")
+                .data(result)
+                .build();
+    }
 
 
 

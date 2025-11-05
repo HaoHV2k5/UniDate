@@ -31,6 +31,7 @@ public class CommentService {
     private final UserRepo userRepo;
     private final CommentMapper commentMapper;
     private final CloudinaryService cloudinaryService;
+    private final NotificationService notificationService;
 
     public CommentResponse createComment(CommentRequest request, String username) {
         User user = userRepo.findByUsername(username)
@@ -48,6 +49,8 @@ public class CommentService {
                 .imageUrls(imgUrls)
                 .build();
         Comment saved = commentRepository.save(comment);
+        User owner = post.getUser();
+        notificationService.notifyPostComment(owner,user,"đã comment vào bài đăng");
         return commentMapper.toCommentResponse(saved);
     }
 

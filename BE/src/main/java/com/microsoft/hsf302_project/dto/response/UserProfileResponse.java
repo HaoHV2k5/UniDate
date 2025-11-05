@@ -14,4 +14,5 @@ public class UserProfileResponse {
     private UserResponse user;
     private List<PostResponse> posts;
     private boolean isOwner;
+    private List<String> album;
 }

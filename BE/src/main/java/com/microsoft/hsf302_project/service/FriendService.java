@@ -27,7 +27,7 @@ public class FriendService {
     private final FriendRequestRepo friendRequestRepo;
     private final UserRepo userRepo;
     private final UserMapper userMapper;
-
+    private final NotificationService notificationService;
     public void sendFriendRequest(String senderUsername, String receiverUsername) {
         User sender = userRepo.getUserByUsername(senderUsername);
         User receiver = userRepo.getUserByUsername(receiverUsername);
@@ -40,6 +40,7 @@ public class FriendService {
                 .status(FriendRequest.Status.PENDING)
                 .build();
         friendRequestRepo.save(friendRequest);
+        notificationService.notifyFriendRequest(receiver,sender,"bạn đã nhận được lời mời kết bạn từ "+sender.getFullName());
     }
 
     public void acceptFriendRequest(String receiverUsername, Long requestId) {
@@ -50,6 +51,8 @@ public class FriendService {
         }
         request.setStatus(FriendRequest.Status.ACCEPTED);
         friendRequestRepo.save(request);
+        notificationService.notifyFriendAccept(request.getSender(),request.getReceiver(),"bạn đã được chấp nhận lời mời kết bạn từ "+request.getReceiver().getFullName());
+
     }
 
     public void rejectFriendRequest(String receiverUsername, Long requestId) {
@@ -60,6 +63,8 @@ public class FriendService {
         }
         request.setStatus(FriendRequest.Status.REJECTED);
         friendRequestRepo.save(request);
+        notificationService.notifyFriendReject(request.getSender(),request.getReceiver(),"bạn đã bị tự chối lời mời kết bạn từ "+request.getReceiver().getFullName());
+
     }
 
 

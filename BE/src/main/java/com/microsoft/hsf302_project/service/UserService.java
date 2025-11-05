@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
+import com.microsoft.hsf302_project.service.AlbumService;
 
 
 @Service
@@ -35,6 +36,7 @@ public class UserService {
     private final AuthService authService;
     private final PostService postService;
     private final FriendService friendService;
+    private final AlbumService albumService;
 
 //    public List<UserResponse> getAllUsers() {
 //        return userRepo.findAll().stream()
@@ -166,13 +168,16 @@ public class UserService {
         boolean isFriend = !isOwner && friendService.getFriendsByUsername(usernameOwner).stream()
             .anyMatch(friend -> friend.getUsername().equals(usernameViewing));
         boolean hasFullAccess = isOwner || isFriend;
-
         List<PostResponse> posts = postService.getPostsForProfile(usernameOwner, hasFullAccess);
-
+        List<String> album = null;
+        try {
+            album = albumService.viewAlbum(user.getId(), user.getId()); // show full nếu là chính chủ
+        } catch (Exception ignored) {}
         return UserProfileResponse.builder()
                             .user(userResponse)
                             .posts(posts)
                             .isOwner(hasFullAccess)
+                            .album(album)
                             .build();
     }
 

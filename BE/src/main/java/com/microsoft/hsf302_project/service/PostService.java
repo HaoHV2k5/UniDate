@@ -35,7 +35,7 @@ public class PostService {
     private final UserRepo userRepo;
     private final LikeRepo likeRepo;
     private final LikeMapper likeMapper;
-
+    private final NotificationService notificationService;
 
     public PostResponse createPost(PostRequest request, String usrname) {
         User user = userRepo.findByUsername(usrname).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -141,6 +141,14 @@ public class PostService {
                     .build();
         } else {
             like.setType(type);
+            if(type.equals("LIKE")) {
+                notificationService.notifyPostLike(post.getUser(), user,user.getFullName()+"đã like bài viết"+post.getTitle());
+
+            }
+            else if(type.equals("DISLIKE")) {
+                notificationService.notifyPostDislike(post.getUser(), user,user.getFullName()+"đã dislike bài viết"+post.getTitle());
+
+            }
         }
         likeRepo.save(like);
     }
@@ -196,5 +204,17 @@ public class PostService {
         return responses;
     }
 
+    public Page<LikeResponse> getTypeLikesByUserId(Long userId, int page, int size) {
+        User user = userRepo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Like> likes = likeRepo.findAllByUserAndType(user, "LIKE", pageable);
+        return likes.map(likeMapper::toLikeResponse);
+    }
+    public Page<LikeResponse> getTypeDislikesByUserId(Long userId, int page, int size) {
+        User user = userRepo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Like> dislikes = likeRepo.findAllByUserAndType(user, "DISLIKE", pageable);
+        return dislikes.map(likeMapper::toLikeResponse);
+    }
 
 }

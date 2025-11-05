@@ -31,6 +31,7 @@ public class AlbumService {
     private final UserRepo userRepo;
     private final CloudinaryService cloudinaryService;
     private final AlbumAccessRequestMapper albumAccessRequestMapper;
+    private final NotificationService notificationService;
 
     // Upload ảnh vào album cá nhân (userId), trả về url list
 
@@ -70,6 +71,7 @@ public class AlbumService {
             .status(AlbumAccessStatus.PENDING)
             .build();
         accessRequestRepo.save(request);
+        notificationService.notifyAlbumAccessRequest(owner,requester,"đã nhận yêu cầu quyền xem album mới");
         return albumAccessRequestMapper.toRequestAccessResponse(request);
     }
 
@@ -79,6 +81,8 @@ public class AlbumService {
         if (!request.getOwner().getId().equals(ownerId)) throw new AppException(ErrorCode.NOT_OWNER_ALBUM);
         request.setStatus(AlbumAccessStatus.APPROVED);
          accessRequestRepo.save(request);
+        notificationService.notifyRequestAccessAccept(request.getRequester(), request.getOwner(),"bạn đã bị "+request.getOwner().getFullName()+" chấp nhận quyền truy cập album");
+
          return albumAccessRequestMapper.toRequestAccessResponse(request);
     }
 
@@ -87,6 +91,7 @@ public class AlbumService {
         AlbumAccessRequest request = accessRequestRepo.findById(requestId).orElseThrow();
         if (!request.getOwner().getId().equals(ownerId)) throw new AppException(ErrorCode.NOT_OWNER_ALBUM);
         albumRepo.deleteById(requestId);
+        notificationService.notifyRequestAccessReject(request.getRequester(), request.getOwner(),"bạn đã bị "+request.getOwner().getFullName()+" từ chối quyền truy cập album");
 
     }
 
