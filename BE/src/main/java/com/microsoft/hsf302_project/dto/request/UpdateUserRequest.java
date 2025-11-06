@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -24,6 +25,7 @@ public class UpdateUserRequest {
     @NotNull(message = "YOB_NOT_BLANK")
     @DobConstrain(min = 18, message = "INVALID_DOB")
     @DateTimeFormat(pattern = "dd/MM/yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
     private LocalDate yob;
 
     @Pattern(regexp = "^(84|0[35789])[0-9]{8}\\b", message = "PHONE_INVALID")
@@ -32,4 +34,6 @@ public class UpdateUserRequest {
     private String address;
 
     private String avatar;
+
+    private Set<String> interests; // ví dụ: ["bóng đá","đọc sách"]
 }

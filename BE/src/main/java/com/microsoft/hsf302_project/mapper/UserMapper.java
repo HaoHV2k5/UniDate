@@ -33,6 +33,7 @@ public interface UserMapper {
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "verified", ignore = true)
     @Mapping(target = "locked", ignore = true)
+    @Mapping(target = "interests", source = "interests")
     void updateUserFromRequest(UpdateUserRequest request, @MappingTarget User user);
 
     List<UserResponse> toUserListResponse(List<User> userList);

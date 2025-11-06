@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Data
@@ -51,6 +53,11 @@ public class User {
     @Column(nullable = false)
     private String gender;
     private LocalDate yob;
+    // Sở thích người dùng, lưu dạng chuỗi
+    @ElementCollection
+    @CollectionTable(name = "user_interests", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "interest", columnDefinition = "NVARCHAR(64)")
+    private Set<String> interests = new LinkedHashSet<>();
 
 //    private boolean isOwner;
 
