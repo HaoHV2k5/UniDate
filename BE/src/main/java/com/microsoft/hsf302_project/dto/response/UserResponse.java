@@ -24,6 +24,7 @@ public class UserResponse {
     private LocalDate yob;
     private String avatar;
     private String address;
+    private java.util.Set<String> interests;
 
 
 }

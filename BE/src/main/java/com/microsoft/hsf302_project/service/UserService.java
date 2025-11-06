@@ -121,6 +121,16 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateUserFromRequest(request, user);
+
+        // Gộp thêm xử lý interests (nếu có truyền lên)
+        if (request.getInterests() != null) {
+            java.util.Set<String> normalized = request.getInterests().stream()
+                    .filter(s -> s != null && !s.trim().isEmpty())
+                    .map(s -> s.trim().toLowerCase())
+                    .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+            user.setInterests(normalized);
+        }
+
         User savedUser = userRepo.save(user);
         return userMapper.toUserResponse(savedUser);
     }
@@ -186,59 +196,45 @@ public class UserService {
         User me = userRepo.getUserByUsername(currentUsername);
         Set<String> relatedUsernames = friendService.getAllRelatedUsernames(currentUsername);
 
-        List<User> allUsers = userRepo.findAll();
-        List<User> candidateList = new ArrayList<>();
+        // Chuẩn hoá interests của current user để so khớp chính xác hơn
+        Set<String> meInterests = Optional.ofNullable(me.getInterests()).orElseGet(Set::of)
+                .stream().filter(Objects::nonNull).map(s -> s.trim().toLowerCase())
+                .collect(java.util.stream.Collectors.toSet());
 
-        // Bước 1: Lọc các user hợp lệ
-        for (User u : allUsers) {
-            if (relatedUsernames.contains(u.getUsername())) {
-                continue; // đã có quan hệ hoặc là chính mình
-            }
-            if (u.isLocked()) {
-                continue;
-            }
-            if (!u.isVerified()) {
-                continue;
-            }
-            if (u.getRole() != null && u.getRole().equalsIgnoreCase("ADMIN")) {
-                continue;
-            }
-            candidateList.add(u);
-        }
+        // 1) Lọc ứng viên hợp lệ (không phải mình, không locked, đã verified, không admin, chưa có quan hệ)
+        List<User> candidates = userRepo.findAll().stream()
+                .filter(u -> !relatedUsernames.contains(u.getUsername()))
+                .filter(u -> !u.isLocked())
+                .filter(User::isVerified)
+                .filter(u -> u.getRole() == null || !u.getRole().equalsIgnoreCase("ADMIN"))
+                .toList();
 
-        // Bước 2: Sắp xếp theo mức độ phù hợp
-        // Ưu tiên khác giới, sau đó gần tuổi nhất
-        Collections.sort(candidateList, new Comparator<User>() {
-            @Override
-            public int compare(User a, User b) {
-                boolean aOpposite = isOppositeGender(me.getGender(), a.getGender());
-                boolean bOpposite = isOppositeGender(me.getGender(), b.getGender());
+        // 2) Ưu tiên: khác giới → nhiều sở thích chung → gần tuổi
+        Comparator<User> comparator = (a, b) -> {
+            boolean aOpp = isOppositeGender(me.getGender(), a.getGender());
+            boolean bOpp = isOppositeGender(me.getGender(), b.getGender());
+            if (aOpp != bOpp) return aOpp ? -1 : 1; // khác giới trước
 
-                // Ưu tiên khác giới trước
-                if (aOpposite && !bOpposite) return -1;
-                if (!aOpposite && bOpposite) return 1;
+            int aCommon = commonInterests(meInterests, a.getInterests());
+            int bCommon = commonInterests(meInterests, b.getInterests());
+            if (aCommon != bCommon) return Integer.compare(bCommon, aCommon); // common interests desc
 
-                // Nếu cùng giới tính, so sánh khoảng cách tuổi
-                int aAgeDiff = getAgeDistance(me.getYob(), a.getYob());
-                int bAgeDiff = getAgeDistance(me.getYob(), b.getYob());
-                if (aAgeDiff < bAgeDiff) return -1;
-                if (aAgeDiff > bAgeDiff) return 1;
+            int aAge = getAgeDistance(me.getYob(), a.getYob());
+            int bAge = getAgeDistance(me.getYob(), b.getYob());
+            if (aAge != bAge) return Integer.compare(aAge, bAge); // age diff asc
 
-                // Cuối cùng so sánh theo ID để ổn định
-                return Long.compare(a.getId(), b.getId());
-            }
-        });
+            return Long.compare(a.getId(), b.getId());
+        };
 
-        // Bước 3: Lấy ra 3 người đầu tiên (hoặc ít hơn nếu danh sách ngắn)
-        List<UserResponse> result = new ArrayList<>();
-        int limit = Math.min(size, candidateList.size());
-        for (int i = 0; i < limit; i++) {
-            User user = candidateList.get(i);
-            UserResponse response = userMapper.toUserResponse(user);
-            result.add(response);
-        }
+        // 3) Sắp xếp toàn bộ
+        List<User> sorted = new java.util.ArrayList<>(candidates);
+        sorted.sort(comparator);
 
-        return result;
+        // 4) Lấy top N (mặc định 3)
+        int limit = Math.min(Math.max(size, 1), sorted.size());
+        return sorted.subList(0, limit).stream()
+                .map(userMapper::toUserResponse)
+                .toList();
     }
 
     // Hàm kiểm tra giới tính khác nhau (M ↔ F)
@@ -252,9 +248,18 @@ public class UserService {
     // Tính độ chênh lệch tuổi (nếu thiếu dữ liệu trả về giá trị lớn)
     private int getAgeDistance(LocalDate yob1, LocalDate yob2) {
         if (yob1 == null || yob2 == null) return 9999;
-        int year1 = yob1.getYear();
-        int year2 = yob2.getYear();
-        return Math.abs(year1 - year2);
+        return Math.abs(yob1.getYear() - yob2.getYear());
+    }
+
+    private int commonInterests(Set<String> mine, Set<String> otherRaw) {
+        if (mine == null || mine.isEmpty() || otherRaw == null || otherRaw.isEmpty()) return 0;
+        Set<String> other = otherRaw.stream()
+                .filter(Objects::nonNull)
+                .map(s -> s.trim().toLowerCase())
+                .collect(java.util.stream.Collectors.toSet());
+        int count = 0;
+        for (String s : mine) if (other.contains(s)) count++;
+        return count;
     }
 
 }
