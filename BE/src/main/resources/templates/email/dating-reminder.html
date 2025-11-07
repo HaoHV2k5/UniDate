@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <title>Nhắc hẹn | UniDate</title>
+    <!-- Preheader: dòng xem trước trong inbox -->
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+    <style>
+        /* Reset nhỏ cho email */
+        html,body{margin:0!important;padding:0!important;background:#fff6f9;}
+        img{border:0;outline:none;text-decoration:none;display:block;}
+        table{border-collapse:collapse!important;}
+        a{color:inherit;}
+        /* Responsive */
+        @media (max-width:600px){
+            .container{width:100%!important;border-radius:0!important;}
+            .px{padding-left:18px!important;padding-right:18px!important;}
+            .h1{font-size:22px!important}
+            .h2{font-size:18px!important}
+        }
+    </style>
+</head>
+<body style="font-family:'Poppins','Segoe UI',Arial,sans-serif; background:#fff6f9;">
+<!-- preheader (ẩn) -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+    Nhắc hẹn UniDate: diễn ra sau 2 ngày – đừng bỏ lỡ nhé!
+</div>
+
+<table role="presentation" width="100%" bgcolor="#fff6f9">
+    <tr>
+        <td align="center" style="padding:28px 14px;">
+            <!-- Card -->
+            <table role="presentation" class="container" width="600" style="width:600px; background:#ffffff; border-radius:16px; box-shadow:0 8px 20px rgba(255,182,193,.25); border:2px solid #ffe0eb; overflow:hidden;">
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="background:linear-gradient(135deg,#ff6fa0,#ff8fab); color:#fff; padding:28px 24px;">
+                        <div style="font-size:26px; font-weight:700; line-height:1.25;">⏰ Nhắc hẹn • UniDate</div>
+                        <div style="opacity:.9; font-size:14px; margin-top:6px;">Sự kiện của bạn sẽ diễn ra sau 2 ngày</div>
+                    </td>
+                </tr>
+
+                <!-- Greeting -->
+                <tr>
+                    <td class="px" style="padding:28px 28px;">
+                        <div class="h1" style="font-size:24px; color:#e84393; font-weight:700; text-align:center; margin:0 0 4px;">
+                            Xin chào <span th:text="${name}">bạn</span> 👋
+                        </div>
+                        <p style="margin:8px 0 0; text-align:center; color:#444;">
+                            Bạn có lịch hẹn: <strong th:text="${title}">Hẹn hò</strong>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Info Box -->
+                <tr>
+                    <td class="px" style="padding:0 28px 6px;">
+                        <table role="presentation" width="100%" style="background:#fff0f6; border:1px solid #ffd1e6; border-radius:14px;">
+                            <tr>
+                                <td style="padding:18px 18px 6px;">
+                                    <table role="presentation" width="100%">
+                                        <tr>
+                                            <td class="h2" style="font-size:18px; color:#ff5c8d; font-weight:700; padding-bottom:8px;">
+                                                Chi tiết lịch hẹn 💞
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#444; font-size:15px; line-height:1.6;">
+                                                <div style="margin:6px 0;">
+                                                    <strong>Đối tác:</strong>
+                                                    <span th:text="${partnerName}">Partner</span>
+                                                </div>
+                                                <div style="margin:6px 0;">
+                                                    <strong>Thời gian:</strong>
+                                                    <span th:text="${startAt}">20:00 25/12/2025</span>
+                                                </div>
+                                                <div style="margin:6px 0;">
+                                                    <strong>Địa điểm:</strong>
+                                                    <span th:text="${location}">Hà Nội</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- CTA -->
+<!--                <tr>-->
+<!--                    <td align="center" class="px" style="padding:18px 28px 10px;">-->
+<!--                        <a th:href="${eventUrl}" target="_blank"-->
+<!--                           style="display:inline-block; background:linear-gradient(135deg,#ff5c8d,#ff82a9); color:#fff; text-decoration:none; padding:14px 26px; border-radius:12px; font-weight:700; box-shadow:0 4px 10px rgba(255,105,180,.3);">-->
+<!--                            Xem chi tiết / Cập nhật lịch-->
+<!--                        </a>-->
+<!--                        <div style="font-size:12px; color:#888; margin-top:10px;">-->
+<!--                            (Nút trên là tuỳ chọn – có thể bỏ qua nếu không dùng <code>eventUrl</code>)-->
+<!--                        </div>-->
+<!--                    </td>-->
+<!--                </tr>-->
+
+                <!-- Tips -->
+                <tr>
+                    <td class="px" style="padding:6px 28px 24px;">
+                        <p style="color:#444; font-size:15px; line-height:1.6; margin:0;">
+                            Chúc bạn có buổi hẹn thật vui vẻ! 💖 Nếu bạn không tạo lịch hẹn này,
+                            hãy liên hệ đội ngũ UniDate để được hỗ trợ.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td align="center" style="background:#fff0f5; padding:16px 20px; color:#6c757d; font-size:12px;">
+                        Đây là email tự động, vui lòng không trả lời.<br>
+                        © 2025 UniDate — Kết nối sinh viên, kết nối yêu thương 💕
+                    </td>
+                </tr>
+            </table>
+            <!-- /Card -->
+        </td>
+    </tr>
+</table>
+</body>
+</html>
