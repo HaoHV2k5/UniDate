@@ -255,7 +255,7 @@ const Profile = () => {
       console.error("Update profile error:", error);
       const errorMessage = error.response?.data?.message || "Không thể cập nhật thông tin";
       toast.error(errorMessage);
-      throw error; // Re-throw để Dialog có thể xử lý
+      throw error;
     } finally {
       setSavingProfile(false);
     }

@@ -3,6 +3,8 @@ import { Heart, MessageCircle, Calendar, User, Search, Home } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,11 +13,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import avatar1 from "@/assets/avatar-1.jpg";
+import { NotificationBell } from "@/components/NotificationBell";
+
 
 export const Navbar = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  const navigate = useNavigate();
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    const avatar = localStorage.getItem('avatar');
+    if (avatar) {
+      setAvatarSrc(avatar);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -81,12 +98,12 @@ export const Navbar = () => {
               />
             </div>
           </div>
-
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar>
-                  <AvatarImage src={avatar1} alt="User" />
+                  <AvatarImage src={avatarSrc} alt="User" />
                   <AvatarFallback>NA</AvatarFallback>
                 </Avatar>
               </Button>
@@ -104,8 +121,9 @@ export const Navbar = () => {
                 <Link to="/admin">Quản trị (Admin)</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/">Đăng xuất</Link>
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
