@@ -9,18 +9,15 @@ import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.repo.PostRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
-import com.microsoft.hsf302_project.repository.CommentRepository;
+import com.microsoft.hsf302_project.repo.CommentRepository;
 import com.microsoft.hsf302_project.mapper.CommentMapper;
-import com.microsoft.hsf302_project.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
-import java.util.stream.Collectors;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Service

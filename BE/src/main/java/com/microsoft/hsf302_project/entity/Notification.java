@@ -1,5 +1,6 @@
 package com.microsoft.hsf302_project.entity;
 
+import com.microsoft.hsf302_project.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -23,7 +24,7 @@ public class Notification {
     @Column(nullable = false, length = 50)
     private NotificationType type;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, columnDefinition = "nvarchar(255)")
     private String message;
 
     @Builder.Default
@@ -40,7 +41,5 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    public enum NotificationType {
-        FRIEND_REQUEST, FRIEND_ACCEPT, FRIEND_REJECT, ALBUM_ACCESS_REQUEST, POST_LIKE,POST_DISLIKE, POST_COMMENT,APPROVE_REQUEST_ACCESS,REJECT_REQUEST_ACCESS, ACCOUNT_LOCKED, ACCOUNT_UNLOCKED
-    }
+
 }

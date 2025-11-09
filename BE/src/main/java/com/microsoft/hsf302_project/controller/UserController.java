@@ -3,6 +3,8 @@ package com.microsoft.hsf302_project.controller;
 import com.microsoft.hsf302_project.dto.request.*;
 import com.microsoft.hsf302_project.dto.response.*;
 import com.microsoft.hsf302_project.entity.User;
+import com.microsoft.hsf302_project.exception.AppException;
+import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.service.MailService;
 import com.microsoft.hsf302_project.service.OtpService;
 import com.microsoft.hsf302_project.service.UserService;
@@ -233,5 +235,22 @@ public class UserController {
                         .build()
         );
     }
+
+    // Thêm DTO cho bio
+    @PatchMapping("/bio")
+    public ApiResponse<UserResponse> updateBio(Authentication authentication, @RequestBody UpdateBioRequest req) {
+        String name = authentication.getName();
+        Long id = userService.getIdByUsername(name);
+        String bio = req.getBio();
+        if (bio == null || bio.trim().isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED);
+        }
+        UserResponse updated = userService.updateBio(id, bio);
+        return ApiResponse.<UserResponse>builder()
+                .data(updated)
+                .message("Cập nhật bio thành công")
+                .build();
+    }
+
 
 }
