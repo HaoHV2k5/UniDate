@@ -1,11 +1,7 @@
 package com.microsoft.hsf302_project.controller;
 
 import com.microsoft.hsf302_project.dto.request.*;
-import com.microsoft.hsf302_project.dto.response.ApiResponse;
-import com.microsoft.hsf302_project.dto.response.ResetPasswordResponse;
-import com.microsoft.hsf302_project.dto.response.UserListResponse;
-import com.microsoft.hsf302_project.dto.response.UserResponse;
-import com.microsoft.hsf302_project.dto.response.UserProfileResponse;
+import com.microsoft.hsf302_project.dto.response.*;
 import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.service.MailService;
 import com.microsoft.hsf302_project.service.OtpService;
@@ -30,12 +26,12 @@ public class UserController {
     private final MailService mailService;
 
 
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @GetMapping("/admin/all")
-//    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
-//        List<UserResponse> users = userService.getAllUsers();
-//        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/all")
+    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{id}")
@@ -158,6 +154,84 @@ public class UserController {
         return response;
     }
 
+    // chỉnh trạng thái locked của user
+    // khóa user lại cua admin
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PutMapping("/admin/lock/{id}")
+    public ApiResponse<String> lockUser(
+            @PathVariable Long id,
+            @RequestBody @Valid LockUserRequest request,
+            Authentication authentication) {
 
+        String adminUsername = authentication.getName();
+        userService.lockUser(id, request, adminUsername);
+
+        return ApiResponse.<String>builder()
+                .data("Đã khóa tài khoản người dùng")
+                .message("Admin: Khóa người dùng thành công")
+                .build();
+    }
+
+    // mở khóa user cuar admin
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PutMapping("/admin/unlock/{id}")
+    public ApiResponse<String> unlockUser(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        String adminUsername = authentication.getName();
+        userService.unlockUser(id, adminUsername);
+
+        return ApiResponse.<String>builder()
+                .data("Đã mở khóa tài khoản người dùng")
+                .message("Admin: Mở khóa người dùng thành công")
+                .build();
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @GetMapping("/admin/allComment")
+    public ResponseEntity<ApiResponse<List<CommentResponse>>> getAllComments() {
+        List<CommentResponse> comments = userService.getAllComments();
+        return ResponseEntity.ok(
+                ApiResponse.<List<CommentResponse>>builder()
+                        .message("Lấy danh sách bình luận thành công")
+                        .data(comments)
+                        .build()
+        );
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @DeleteMapping("/admin/deleteComment/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long id) {
+        userService.deleteComment(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .message("Xóa bình luận thành công")
+                        .build()
+        );
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @GetMapping("/admin/allLike")
+    public ResponseEntity<ApiResponse<List<LikeResponse>>> getAllLikes() {
+        List<LikeResponse> likes = userService.getAllLikes();
+        return ResponseEntity.ok(
+                ApiResponse.<List<LikeResponse>>builder()
+                        .message("Lấy danh sách lượt thích thành công")
+                        .data(likes)
+                        .build()
+        );
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @DeleteMapping("/admin/deleteLike/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteLike(@PathVariable Long id) {
+        userService.deleteComment(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .message("Xóa bình luận thành công")
+                        .build()
+        );
+    }
 
 }

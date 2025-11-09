@@ -4,24 +4,24 @@ package com.microsoft.hsf302_project.service;
 
 import com.microsoft.hsf302_project.dto.request.*;
 
-import com.microsoft.hsf302_project.dto.response.UserListResponse;
-import com.microsoft.hsf302_project.dto.response.UserResponse;
-import com.microsoft.hsf302_project.dto.response.UserProfileResponse;
-import com.microsoft.hsf302_project.dto.response.PostResponse;
+import com.microsoft.hsf302_project.dto.response.*;
 import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.mapper.UserMapper;
 
+import com.microsoft.hsf302_project.repo.LikeRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
+import com.microsoft.hsf302_project.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
-import com.microsoft.hsf302_project.service.AlbumService;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -30,6 +30,9 @@ import com.microsoft.hsf302_project.service.AlbumService;
 public class UserService {
 
     private final UserRepo userRepo;
+    private final CommentRepository commentRepository;
+    private final LikeRepo likeRepo;
+
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final  OtpService otpService;
@@ -37,12 +40,13 @@ public class UserService {
     private final PostService postService;
     private final FriendService friendService;
     private final AlbumService albumService;
+    private final NotificationService notificationService;
 
-//    public List<UserResponse> getAllUsers() {
-//        return userRepo.findAll().stream()
-//                .map(userMapper::toUserResponse)
-//                .toList();
-//    }
+    public List<UserResponse> getAllUsers() {
+        return userRepo.findAll().stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+    }
 
     public UserResponse getUserById(Long id) {
         User user = userRepo.findById(id)
@@ -80,8 +84,6 @@ public class UserService {
     }
     public User getUser(String email){
         User user = userRepo.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-
         return user;
 
     }
@@ -260,6 +262,87 @@ public class UserService {
         int count = 0;
         for (String s : mine) if (other.contains(s)) count++;
         return count;
+    }
+
+
+    //
+    public void lockUser(Long userId, LockUserRequest request, String adminUsername) {
+
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        User admin = userRepo.getUserByUsername(adminUsername);
+
+        // Không được ban admin khác
+        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            throw new AppException(ErrorCode.CANNOT_LOCK_ADMIN);
+        }
+
+        // Set locked = true
+        user.setLocked(true);
+        user.setLockedReason(request.getReason());
+        user.setLockedDate(LocalDateTime.now());
+        user.setLockedUntil(request.getLockedUntil()); // null = vĩnh viễn
+
+        userRepo.save(user);
+
+        String message = "Tài khoản của bạn đã bị khóa. Lý do: " + request.getReason();
+        notificationService.notifyAccountLocked(user, admin, message);
+
+
+
+    }
+
+    public void unlockUser(Long userId, String adminUsername) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        User admin = userRepo.getUserByUsername(adminUsername);
+
+        user.setLocked(false);
+        user.setLockedReason(null);
+        user.setLockedDate(null);
+        user.setLockedUntil(null);
+
+        userRepo.save(user);
+
+        // Gửi notification cho user được mở khóa
+        String message = "Tài khoản của bạn đã được mở khóa.";
+        notificationService.notifyAccountUnlocked(user, admin, message);
+
+
+    }
+
+    public List<CommentResponse> getAllComments() {
+        return commentRepository.findAll().stream()
+                .map(c -> CommentResponse.builder()
+                        .id(c.getId())
+                        .content(c.getContent())
+                        .createdAt(c.getCreatedAt())
+                        .userName(c.getUser().getUsername())
+                        .imageUrls(c.getImageUrls())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public void deleteComment(Long id) {
+        commentRepository.deleteById(id);
+    }
+
+    public List<LikeResponse> getAllLikes() {
+        return likeRepo.findAll().stream()
+                .map(l -> LikeResponse.builder()
+                        .id(l.getId())
+                        .title(l.getPost().getTitle())
+                        .ownerPost(l.getPost().getUser().getUsername())
+                        .createdAt(l.getCreatedAt())
+                        .updatedAt(l.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public void deleteLike(Long id){
+        likeRepo.deleteById(id);
     }
 
 }

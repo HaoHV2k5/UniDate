@@ -42,6 +42,12 @@ public class NotificationService {
     public void notifyPostComment(User toUser, User triggerBy, String message) {
         saveNotification(toUser, triggerBy, Notification.NotificationType.POST_COMMENT, message);
     }
+    public void notifyAccountLocked(User toUser, User triggerBy, String message) {
+        saveNotification(toUser, triggerBy, Notification.NotificationType.ACCOUNT_LOCKED, message);
+    }
+    public void notifyAccountUnlocked(User toUser, User triggerBy, String message) {
+        saveNotification(toUser, triggerBy, Notification.NotificationType.ACCOUNT_UNLOCKED, message);
+    }
     private void saveNotification(User toUser, User triggerBy, Notification.NotificationType type, String message) {
         Notification noti = Notification.builder()
                 .user(toUser)
