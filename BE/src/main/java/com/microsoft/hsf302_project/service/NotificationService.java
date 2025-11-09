@@ -69,4 +69,11 @@ public class NotificationService {
         if (!noti.getUser().getId().equals(userId)) throw new RuntimeException("No permission");
         notificationRepository.delete(noti);
     }
+
+    public void notifyAccountLocked(User toUser, User triggerBy, String message) {
+        saveNotification(toUser, triggerBy, NotificationType.ACCOUNT_LOCKED, message);
+    }
+    public void notifyAccountUnlocked(User toUser, User triggerBy, String message) {
+        saveNotification(toUser, triggerBy, NotificationType.ACCOUNT_UNLOCKED, message);
+    }
 }
