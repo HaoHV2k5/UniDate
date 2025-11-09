@@ -10,9 +10,10 @@ import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.mapper.UserMapper;
 
+import com.microsoft.hsf302_project.repo.CommentRepository;
 import com.microsoft.hsf302_project.repo.LikeRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
-import com.microsoft.hsf302_project.repository.CommentRepository;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
