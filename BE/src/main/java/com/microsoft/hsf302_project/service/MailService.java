@@ -68,12 +68,24 @@ public class MailService {
         messageHelper.setSubject("\uD83D\uDD14 [UniDate] Tài khoản của bạn đã được cập nhật\n");
         messageHelper.setText(html,true);
         javaMailSender.send(mimeMessage);
-
-
-
-
     }
 
+    public void sendDatingReminder(String to, String name, String title,
+                                   LocalDateTime startAt, String location, String partnerName) throws MessagingException {
+        Context ctx = new Context();
+        ctx.setVariable("name", name);
+        ctx.setVariable("title", title);
+        ctx.setVariable("startAt", startAt.format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
+        ctx.setVariable("location", location);
+        ctx.setVariable("partnerName", partnerName);
 
+        String html = templateEngine.process("email/dating-reminder.html", ctx);
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+        helper.setTo(to);
+        helper.setSubject("⏰ Nhắc hẹn: " + title + " (sau 2 ngày)");
+        helper.setText(html, true);
+        javaMailSender.send(mimeMessage);
+    }
 
 }

@@ -47,7 +47,16 @@ public enum ErrorCode {
     DUPLICATE_REQUEST_VIEW(1043, "Bạn đã gửi yêu cầu truy cập album này rồi", HttpStatus.CONFLICT),
     NOT_OWNER_ALBUM(1044, "Bạn không phải chủ sở hữu album này!", HttpStatus.CONFLICT),
 
+    CANNOT_LOCK_ADMIN(1045, "Bạn không thể lock admin khác!", HttpStatus.CONFLICT),
+    CANNOT_DELETE_ADMIN(1046, "Bạn không thể xóa admin khác!", HttpStatus.CONFLICT),
 
+    DATE_EVENT_NOT_FOUND (1050, "Cuộc hẹn không tồn tại", HttpStatus.NOT_FOUND),
+    DATE_TIME_INVALID (1051, "Thời gian không hợp lệ (start < end)", HttpStatus.BAD_REQUEST),
+    DATE_SELF_INVITE (1052, "Không thể mời chính mình", HttpStatus.BAD_REQUEST),
+    DATE_NOT_VERIFIED (1053, "Tài khoản chưa xác thực, không thể đặt lịch", HttpStatus.BAD_REQUEST),
+    DATE_PERMISSION_DENIED (1054, "Bạn không có quyền thao tác cuộc hẹn này", HttpStatus.FORBIDDEN),
+    DATE_TIME_CONFLICT (1055, "Trùng thời gian với cuộc hẹn khác đã xác nhận", HttpStatus.CONFLICT),
+    DATE_STATUS_INVALID (1056, "Trạng thái cuộc hẹn không hợp lệ cho thao tác này", HttpStatus.BAD_REQUEST),
 
 
 
