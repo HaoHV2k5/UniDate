@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -42,9 +43,20 @@ public class User {
     private String avatar;
     @Builder.Default
     private boolean isVerified = false;
-    @Column(name = "locked",nullable = false)
+
+    //lock user
     @Builder.Default
     private boolean locked = false;
+
+    @Column(name = "locked_reason",nullable = true)
+    private String lockedReason;
+
+    @Column(name = "locked_date",nullable = true)
+    private LocalDateTime lockedDate;
+
+    @Column(name = "locked_until",nullable = true)
+    private LocalDateTime lockedUntil;
+
     private String phone;
     @Column(columnDefinition = "NVARCHAR(255)")
     private String address;
