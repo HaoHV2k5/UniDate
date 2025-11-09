@@ -141,18 +141,18 @@ public class UserController {
     }
 
     // API: Gợi ý bạn bè cho người dùng hiện tại
-    @GetMapping("/suggest")
-    public ApiResponse<List<UserResponse>> suggestUsers(Authentication authentication,
-                                                        @RequestParam(defaultValue = "3") int size) {
-        String username = authentication.getName();
-        List<UserResponse> suggested = userService.suggestUsers(username, size);
+        @GetMapping("/suggest")
+        public ApiResponse<List<UserResponse>> suggestUsers(Authentication authentication,
+                                                            @RequestParam(defaultValue = "3") int size) {
+            String username = authentication.getName();
+            List<UserResponse> suggested = userService.suggestUsers(username, size);
 
-        ApiResponse<List<UserResponse>> response = new ApiResponse<>();
-        response.setCode(1000);
-        response.setMessage("Gợi ý " + suggested.size() + " người phù hợp nhất");
-        response.setData(suggested);
-        return response;
-    }
+            ApiResponse<List<UserResponse>> response = new ApiResponse<>();
+            response.setCode(1000);
+            response.setMessage("Gợi ý " + suggested.size() + " người phù hợp nhất");
+            response.setData(suggested);
+            return response;
+        }
 
     // chỉnh trạng thái locked của user
     // khóa user lại cua admin
@@ -234,4 +234,20 @@ public class UserController {
         );
     }
 
+    @PutMapping("/{id}/location")
+    public ResponseEntity<UserResponse> updateUserLocation(
+            @PathVariable Long id,
+            @RequestBody LocationUpdateRequest request) {
+
+        UserResponse updated = userService.updateUserLocation(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/{id}/nearby")
+    public ResponseEntity<List<NearbyUserResponse>> findNearby(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "5") double radiusKm) {
+        List<NearbyUserResponse> list = userService.findUsersWithinRadiusKm(id, radiusKm);
+        return ResponseEntity.ok(list);
+    }
 }

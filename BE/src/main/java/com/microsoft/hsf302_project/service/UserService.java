@@ -345,4 +345,71 @@ public class UserService {
         likeRepo.deleteById(id);
     }
 
+    public UserResponse updateUserLocation(Long userId, LocationUpdateRequest request) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        user.setLatitude(request.getLatitude());
+        user.setLongitude(request.getLongitude());
+
+        userRepo.save(user);
+        return userMapper.toUserResponse(user);
+    }
+
+    public List<NearbyUserResponse> findUsersWithinRadiusKm(Long userId, double radiusKm) {
+        User me = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (me.getLatitude() == null || me.getLongitude() == null) {
+            return List.of();
+        }
+
+        double lat1 = me.getLatitude();
+        double lon1 = me.getLongitude();
+
+        List<User> usersWithLocation = userRepo.findAll().stream()
+                .filter(u -> u.getLatitude() != null && u.getLongitude() != null)
+                .filter(u -> !u.getId().equals(userId))
+                .toList();
+
+        List<NearbyUserResponse> result = new ArrayList<>();
+        for (User u : usersWithLocation) {
+            double d = haversineKm(lat1, lon1, u.getLatitude(), u.getLongitude());
+            if (d <= radiusKm) {
+                double rounded = Math.round(d * 100.0) / 100.0;
+
+                // map User → UserResponse
+                UserResponse userResponse = UserResponse.builder()
+                        .id(u.getId())
+                        .username(u.getUsername())
+                        .email(u.getEmail())
+                        .phone(u.getPhone())
+                        .fullName(u.getFullName())
+                        .gender(u.getGender())
+                        .yob(u.getYob())
+                        .avatar(u.getAvatar())
+                        .address(u.getAddress())
+                        .interests(u.getInterests())
+                        .latitude(u.getLatitude())
+                        .longitude(u.getLongitude())
+                        .build();
+
+                result.add(new NearbyUserResponse(userResponse, rounded));
+            }
+        }
+
+        result.sort(Comparator.comparingDouble(NearbyUserResponse::getDistanceKm));
+        return result;
+    }
+
+    private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon/2) * Math.sin(dLon/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
 }
