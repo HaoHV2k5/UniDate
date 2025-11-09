@@ -3,22 +3,23 @@ package com.microsoft.hsf302_project.controller;
 import com.microsoft.hsf302_project.dto.request.*;
 import com.microsoft.hsf302_project.dto.response.ApiResponse;
 import com.microsoft.hsf302_project.dto.response.ResetPasswordResponse;
-import com.microsoft.hsf302_project.dto.response.UserListResponse;
 import com.microsoft.hsf302_project.dto.response.UserResponse;
 import com.microsoft.hsf302_project.dto.response.UserProfileResponse;
 import com.microsoft.hsf302_project.entity.User;
+import com.microsoft.hsf302_project.exception.AppException;
+import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.service.MailService;
 import com.microsoft.hsf302_project.service.OtpService;
 import com.microsoft.hsf302_project.service.UserService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
+import com.microsoft.hsf302_project.dto.request.UpdateBioRequest;
 
 @RestController
 @RequestMapping("/api/users")
@@ -132,6 +133,22 @@ public class UserController {
         User user = userService.getUser(username);
         userService.updatePassword(user,request.getPassword());
         return ApiResponse.<Boolean>builder().message("Password updated successfully").build();
+    }
+
+    // Thêm DTO cho bio
+    @PatchMapping("/bio")
+    public ApiResponse<UserResponse> updateBio(Authentication authentication, @RequestBody UpdateBioRequest req) {
+        String name = authentication.getName();
+        Long id = userService.getIdByUsername(name);
+        String bio = req.getBio();
+        if (bio == null || bio.trim().isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED);
+        }
+        UserResponse updated = userService.updateBio(id, bio);
+        return ApiResponse.<UserResponse>builder()
+                .data(updated)
+                .message("Cập nhật bio thành công")
+                .build();
     }
 
 

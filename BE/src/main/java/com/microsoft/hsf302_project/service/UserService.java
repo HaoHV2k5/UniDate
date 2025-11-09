@@ -257,4 +257,12 @@ public class UserService {
         return Math.abs(year1 - year2);
     }
 
+    public UserResponse updateBio(Long userId, String bio) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setBio(bio);
+        User savedUser = userRepo.save(user);
+        return userMapper.toUserResponse(savedUser);
+    }
+
 }

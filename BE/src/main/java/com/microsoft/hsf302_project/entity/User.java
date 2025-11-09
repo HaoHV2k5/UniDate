@@ -48,9 +48,10 @@ public class User {
     private String phone;
     @Column(columnDefinition = "NVARCHAR(255)")
     private String address;
-    @Column(nullable = false)
+//    @Column(nullable = false)
     private String gender;
     private LocalDate yob;
+    private String bio;
 
 //    private boolean isOwner;
 
