@@ -1,4 +1,4 @@
-package com.microsoft.hsf302_project.repository;
+package com.microsoft.hsf302_project.repo;
 
 import com.microsoft.hsf302_project.entity.Notification;
 import org.springframework.data.domain.Page;

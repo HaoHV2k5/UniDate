@@ -19,6 +19,7 @@ public class UserResponse {
     private String phone;
     private String fullName;
     private String gender;
+    private String bio;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate yob;

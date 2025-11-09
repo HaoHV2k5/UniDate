@@ -10,9 +10,10 @@ import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.mapper.UserMapper;
 
+import com.microsoft.hsf302_project.repo.CommentRepository;
 import com.microsoft.hsf302_project.repo.LikeRepo;
 import com.microsoft.hsf302_project.repo.UserRepo;
-import com.microsoft.hsf302_project.repository.CommentRepository;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -343,6 +344,14 @@ public class UserService {
 
     public void deleteLike(Long id){
         likeRepo.deleteById(id);
+    }
+
+    public UserResponse updateBio(Long userId, String bio) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setBio(bio);
+        User savedUser = userRepo.save(user);
+        return userMapper.toUserResponse(savedUser);
     }
 
     public UserResponse updateUserLocation(Long userId, LocationUpdateRequest request) {

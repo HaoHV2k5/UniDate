@@ -3,6 +3,8 @@ package com.microsoft.hsf302_project.controller;
 import com.microsoft.hsf302_project.dto.request.*;
 import com.microsoft.hsf302_project.dto.response.*;
 import com.microsoft.hsf302_project.entity.User;
+import com.microsoft.hsf302_project.exception.AppException;
+import com.microsoft.hsf302_project.exception.ErrorCode;
 import com.microsoft.hsf302_project.service.MailService;
 import com.microsoft.hsf302_project.service.OtpService;
 import com.microsoft.hsf302_project.service.UserService;
@@ -141,18 +143,18 @@ public class UserController {
     }
 
     // API: Gợi ý bạn bè cho người dùng hiện tại
-        @GetMapping("/suggest")
-        public ApiResponse<List<UserResponse>> suggestUsers(Authentication authentication,
-                                                            @RequestParam(defaultValue = "3") int size) {
-            String username = authentication.getName();
-            List<UserResponse> suggested = userService.suggestUsers(username, size);
+    @GetMapping("/suggest")
+    public ApiResponse<List<UserResponse>> suggestUsers(Authentication authentication,
+                                                        @RequestParam(defaultValue = "3") int size) {
+        String username = authentication.getName();
+        List<UserResponse> suggested = userService.suggestUsers(username, size);
 
-            ApiResponse<List<UserResponse>> response = new ApiResponse<>();
-            response.setCode(1000);
-            response.setMessage("Gợi ý " + suggested.size() + " người phù hợp nhất");
-            response.setData(suggested);
-            return response;
-        }
+        ApiResponse<List<UserResponse>> response = new ApiResponse<>();
+        response.setCode(1000);
+        response.setMessage("Gợi ý " + suggested.size() + " người phù hợp nhất");
+        response.setData(suggested);
+        return response;
+    }
 
     // chỉnh trạng thái locked của user
     // khóa user lại cua admin
@@ -233,6 +235,23 @@ public class UserController {
                         .build()
         );
     }
+
+    // Thêm DTO cho bio
+    @PatchMapping("/bio")
+    public ApiResponse<UserResponse> updateBio(Authentication authentication, @RequestBody UpdateBioRequest req) {
+        String name = authentication.getName();
+        Long id = userService.getIdByUsername(name);
+        String bio = req.getBio();
+        if (bio == null || bio.trim().isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED);
+        }
+        UserResponse updated = userService.updateBio(id, bio);
+        return ApiResponse.<UserResponse>builder()
+                .data(updated)
+                .message("Cập nhật bio thành công")
+                .build();
+    }
+
 
     @PutMapping("/{id}/location")
     public ResponseEntity<UserResponse> updateUserLocation(

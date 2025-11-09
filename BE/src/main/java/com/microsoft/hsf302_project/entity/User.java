@@ -65,6 +65,7 @@ public class User {
     @Column(nullable = false)
     private String gender;
     private LocalDate yob;
+    private String bio;
     // Sở thích người dùng, lưu dạng chuỗi
     @ElementCollection
     @CollectionTable(name = "user_interests", joinColumns = @JoinColumn(name = "user_id"))
