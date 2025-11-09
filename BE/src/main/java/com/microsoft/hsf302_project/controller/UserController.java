@@ -26,12 +26,12 @@ public class UserController {
     private final MailService mailService;
 
 
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @GetMapping("/admin/all")
-//    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
-//        List<UserResponse> users = userService.getAllUsers();
-//        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
-//    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/all")
+    public ApiResponse<List<UserResponse>> getAllUsersForAdmin() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{id}")
