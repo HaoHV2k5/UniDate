@@ -1,6 +1,6 @@
 package com.microsoft.hsf302_project.dto.response;
 
-import com.microsoft.hsf302_project.entity.Notification;
+
 import com.microsoft.hsf302_project.enums.NotificationType;
 import lombok.Data;
 import java.time.LocalDateTime;
