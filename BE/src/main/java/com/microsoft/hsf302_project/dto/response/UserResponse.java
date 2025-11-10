@@ -28,4 +28,6 @@ public class UserResponse {
     private java.util.Set<String> interests;
 
 
+    private Double latitude;
+    private Double longitude;
 }

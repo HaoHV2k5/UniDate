@@ -253,4 +253,20 @@ public class UserController {
     }
 
 
+    @PutMapping("/{id}/location")
+    public ResponseEntity<UserResponse> updateUserLocation(
+            @PathVariable Long id,
+            @RequestBody LocationUpdateRequest request) {
+
+        UserResponse updated = userService.updateUserLocation(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/{id}/nearby")
+    public ResponseEntity<List<NearbyUserResponse>> findNearby(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "5") double radiusKm) {
+        List<NearbyUserResponse> list = userService.findUsersWithinRadiusKm(id, radiusKm);
+        return ResponseEntity.ok(list);
+    }
 }

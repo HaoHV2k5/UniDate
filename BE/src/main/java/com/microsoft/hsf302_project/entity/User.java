@@ -72,6 +72,11 @@ public class User {
     @Column(name = "interest", columnDefinition = "NVARCHAR(64)")
     private Set<String> interests = new LinkedHashSet<>();
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
 //    private boolean isOwner;
 
 

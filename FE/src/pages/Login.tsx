@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { loginWithGoogle } from "@/firebase/firebase";
-import { Separator } from "@/components/ui/separator";
 import api from "@/api/api";
 
 // Interface cho trái tim
@@ -154,24 +153,7 @@ const Login = () => {
     }
   };
 
-  // const handleFacebookLogin = async () => {
-  //   try {
-  //     const token = await loginWithFacebook();
 
-  //     const res = await api.post("/api/auth/firebase", { token });
-
-  //     const { accessToken, refreshToken } = res.data.data;
-
-  //     localStorage.setItem("accessToken", accessToken);
-  //     localStorage.setItem("refreshToken", refreshToken);
-
-  //     toast.success("Đăng nhập bằng Facebook thành công!");
-  //     navigate("/discover");
-  //   } catch (err) {
-  //     toast.error("Đăng nhập Facebook thất bại");
-  //     console.error(err);
-  //   }
-  // };
 
 
   return (
