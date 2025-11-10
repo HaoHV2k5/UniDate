@@ -5,6 +5,7 @@ import com.microsoft.hsf302_project.dto.response.*;
 import com.microsoft.hsf302_project.entity.User;
 import com.microsoft.hsf302_project.exception.AppException;
 import com.microsoft.hsf302_project.exception.ErrorCode;
+import com.microsoft.hsf302_project.service.GeminiService;
 import com.microsoft.hsf302_project.service.MailService;
 import com.microsoft.hsf302_project.service.OtpService;
 import com.microsoft.hsf302_project.service.UserService;
@@ -26,6 +27,7 @@ public class UserController {
     private final UserService userService;
     private final OtpService otpService;
     private final MailService mailService;
+    private final GeminiService geminiService;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -147,13 +149,15 @@ public class UserController {
     public ApiResponse<List<UserResponse>> suggestUsers(Authentication authentication,
                                                         @RequestParam(defaultValue = "3") int size) {
         String username = authentication.getName();
+        UserResponse user = userService.getUserByUsername(username);
         List<UserResponse> suggested = userService.suggestUsers(username, size);
 
-        ApiResponse<List<UserResponse>> response = new ApiResponse<>();
-        response.setCode(1000);
-        response.setMessage("Gợi ý " + suggested.size() + " người phù hợp nhất");
-        response.setData(suggested);
-        return response;
+        List<UserResponse> response = geminiService.suggestMatch(user, suggested);
+
+        return ApiResponse.<List<UserResponse>>builder()
+                .message("suggest successfully")
+                .data(response)
+                .build();
     }
 
     // chỉnh trạng thái locked của user
