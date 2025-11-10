@@ -65,6 +65,7 @@ public class User {
     @Column(nullable = false)
     private String gender;
     private LocalDate yob;
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String bio;
     // Sở thích người dùng, lưu dạng chuỗi
     @ElementCollection
