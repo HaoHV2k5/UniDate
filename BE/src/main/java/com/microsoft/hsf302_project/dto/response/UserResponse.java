@@ -27,6 +27,8 @@ public class UserResponse {
     private String address;
     private java.util.Set<String> interests;
 
+    private double score;
+    private String reason;
 
     private Double latitude;
     private Double longitude;
