@@ -20,4 +20,6 @@ UserRepo extends JpaRepository<User,Long> {
     User getUserByUsername(String username);
 
     Optional<User> findByEmail(String email);
+
+    User findUserByRole(String role);
 }

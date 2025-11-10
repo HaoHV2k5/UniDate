@@ -57,6 +57,9 @@ public enum ErrorCode {
     DATE_PERMISSION_DENIED (1054, "Bạn không có quyền thao tác cuộc hẹn này", HttpStatus.FORBIDDEN),
     DATE_TIME_CONFLICT (1055, "Trùng thời gian với cuộc hẹn khác đã xác nhận", HttpStatus.CONFLICT),
     DATE_STATUS_INVALID (1056, "Trạng thái cuộc hẹn không hợp lệ cho thao tác này", HttpStatus.BAD_REQUEST),
+    WALLET_NOT_EXIST (1057, "Wallet không tồn tại", HttpStatus.BAD_REQUEST),
+    PREMIUM_NOT_EXIST(1058, "Chưa có mua goí premium", HttpStatus.BAD_REQUEST),
+    BALANCE_NOT_VALID(1059, "Số tiền nạp không đủ để mua gói Premium", HttpStatus.BAD_REQUEST),
 
 
 
