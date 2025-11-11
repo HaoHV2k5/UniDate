@@ -68,6 +68,14 @@ public class PostService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
         postMapper.updatePost(request, post);
+        List<String> urlImg = new ArrayList<>();
+        if(request.getImage() != null && !request.getImage().isEmpty() ) {
+            for (MultipartFile file : request.getImage()) {
+                String url  = cloudinaryService.upload(file);
+                urlImg.add(url);
+            }
+        }
+        post.setImageUrl(urlImg);
         postRepo.save(post);
         PostResponse response = postMapper.toPostResponse(post);
         response.setLikeCount(likeRepo.countByPostAndType(post, "LIKE"));
