@@ -19,6 +19,7 @@ public interface PostMapper {
     @Mapping(target = "dislikeCount", ignore = true)
     PostResponse toPostResponse(Post post);
 
+    @Mapping(target = "imageUrl", ignore = true)
     void updatePost(PostUpdateRequest postUpdateRequest, @MappingTarget Post post);
 
     List<PostResponse> toListPostResponse(List<Post> posts);
