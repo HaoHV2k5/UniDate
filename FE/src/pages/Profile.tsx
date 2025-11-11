@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PrivacyToggle } from "@/components/PrivacyToggle";
+import { Input } from "@/components/ui/input";
 import { CreatePostDialog } from "@/components/CreatePostDialog";
 import {
   AlertDialog,
@@ -19,13 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Edit,
   MapPin,
   Briefcase,
   Heart,
   MessageCircle,
-  Share2,
   Trash2,
   Lock,
   Image as ImageIcon,
@@ -39,22 +39,57 @@ import { toast } from "sonner";
 import api from "@/api/api";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 
+// Interfaces giống với Discover
+interface ApiPost {
+  id: number;
+  content: string;
+  title: string;
+  imageUrl: string[];
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    phone: string | null;
+    fullName: string;
+    gender: string | null;
+    yob: string | null;
+    avatar: string;
+    address: string | null;
+  };
+  isPrivate: boolean;
+  status: string;
+  likeCount: number;
+  dislikeCount: number;
+}
+
 interface Post {
   id: number;
   content: string;
-  title?: string;
-  image?: string;
-  timestamp?: string;
+  title: string;
+  images: string[];
+  timestamp: string;
   likes: number;
-  comments: number;
-  isLiked?: boolean;
-  author?: {
-    id?: number;
-    name?: string;
-    avatar?: string;
-    major?: string;
-    username?: string;
+  commentsCount: number;
+  commentsList?: CommentResp[];
+  isLiked: boolean;
+  author: {
+    name: string;
+    avatar: string;
+    username: string;
   };
+}
+
+interface CommentResp {
+  id: number;
+  content: string;
+  createdAt: string;
+  userName?: string;
+  user?: { id?: number; username?: string; fullName?: string; avatar?: string };
+  userAvatar?: string;
+  imageUrls?: string[];
+  avatar?: string;
 }
 
 interface UserProfile {
@@ -66,7 +101,6 @@ interface UserProfile {
   avatar?: string;
   isPrivate?: boolean;
   bio?: string;
-  job?: string;
   location?: string;
   address?: string;
   interests?: string[];
@@ -77,6 +111,262 @@ interface UserProfile {
   email?: string;
   major?: string;
 }
+
+const DEFAULT_AVATAR = "/default-avatar.png";
+
+// PostCard component giống với Discover
+const PostCard = ({
+  post,
+  onLike,
+  onComment,
+  refreshCommentsForPost,
+  isOwner,
+  onEdit,
+  onDelete
+}: {
+  post: Post;
+  onLike: (postId: number) => Promise<void>;
+  onComment: (postId: number, content: string) => Promise<void>;
+  refreshCommentsForPost: (postId: number) => Promise<void>;
+  isOwner: boolean;
+  onEdit: (post: Post) => void;
+  onDelete: (postId: number) => void;
+}) => {
+  const navigate = useNavigate();
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentsPage, setCommentsPage] = useState(0);
+  const [commentsHasMore, setCommentsHasMore] = useState(false);
+  const [comments, setComments] = useState<CommentResp[]>(post.commentsList ?? []);
+
+  useEffect(() => {
+    setComments(post.commentsList ?? []);
+  }, [post.commentsList]);
+
+  const authorName = post.author?.name || "Ẩn danh";
+  const avatarSrc = post.author?.avatar || DEFAULT_AVATAR;
+
+  const goToProfile = (username?: string) => {
+    if (!username) return;
+    navigate(`/profile/${encodeURIComponent(username)}`);
+  };
+
+  const loadMoreComments = async () => {
+    try {
+      setLoadingComments(true);
+      const nextPage = commentsPage + 1;
+      const res = await api.get(`/api/post/${post.id}/comments`, { params: { page: nextPage, size: 10 } });
+      const pageData = res.data?.data;
+      const newComments: CommentResp[] = pageData?.content || [];
+      setComments((prev) => [...prev, ...newComments]);
+      const totalPages = pageData?.totalPages ?? 1;
+      setCommentsHasMore(nextPage + 1 < totalPages);
+      setCommentsPage(nextPage);
+    } catch (err) {
+      console.error("Lỗi load more comments:", err);
+      toast.error("Không thể tải thêm bình luận");
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    const txt = commentText.trim();
+    if (!txt) return;
+    try {
+      await onComment(post.id, txt);
+      setCommentText("");
+      setLoadingComments(true);
+      await refreshCommentsForPost(post.id);
+      setLoadingComments(false);
+      if (!showComments) setShowComments(true);
+    } catch (err) {
+      setLoadingComments(false);
+    }
+  };
+
+  return (
+    <Card className="shadow-card hover-lift transition-all">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => goToProfile(post.author.username)}
+            className="p-0 rounded-full focus:outline-none"
+            aria-label={`Xem profile ${authorName}`}
+          >
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={avatarSrc} alt={authorName} />
+              <AvatarFallback>{authorName[0]}</AvatarFallback>
+            </Avatar>
+          </button>
+
+          <div className="flex-1">
+            <h3 className="font-semibold text-sm">{authorName}</h3>
+            <p className="text-xs text-muted-foreground">
+              {post.timestamp}
+            </p>
+          </div>
+
+          {isOwner && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(post)}
+                aria-label="Sửa bài viết"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(post.id)}
+                className="text-destructive hover:text-destructive"
+                aria-label="Xóa bài viết"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {post.title && <h2 className="font-bold text-lg">{post.title}</h2>}
+
+        <p className="text-sm leading-relaxed">{post.content}</p>
+
+        {post.images && post.images.length > 0 && (
+          <>
+            {post.images.length === 1 ? (
+              <div className="rounded-lg overflow-hidden">
+                <img
+                  src={post.images[0]}
+                  alt="Post image"
+                  className="w-full h-auto object-cover rounded-lg max-h-[500px]"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {post.images.slice(0, 4).map((src, idx) => (
+                  <div key={idx} className="overflow-hidden rounded-lg">
+                    <img
+                      src={src}
+                      alt={`Post image ${idx + 1}`}
+                      className="w-full h-40 object-cover rounded-lg"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
+          <span>{post.likes} lượt thích</span>
+          <span>{post.commentsCount} bình luận</span>
+        </div>
+
+        <div className="flex items-center gap-2 pt-2 border-t">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`flex-1 ${post.isLiked ? "text-primary" : ""}`}
+            onClick={() => onLike(post.id)}
+          >
+            <Heart
+              className={`h-4 w-4 mr-2 ${post.isLiked ? "fill-current" : ""}`}
+            />
+            Thích
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1"
+            onClick={() => setShowComments((s) => !s)}
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Bình luận
+          </Button>
+        </div>
+
+        {showComments && (
+          <div className="pt-3 border-t mt-2 space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Viết bình luận của bạn..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmitComment();
+                  }
+                }}
+              />
+              <Button onClick={handleSubmitComment} disabled={loadingComments}>Gửi</Button>
+            </div>
+
+            <div className="space-y-2 max-h-60 overflow-auto mt-2">
+              {loadingComments ? (
+                <p className="text-sm text-muted-foreground">Đang tải bình luận...</p>
+              ) : comments.length > 0 ? (
+                comments.map((c) => {
+                  const name = c.userName ?? (c.user && (c.user as any).fullName) ?? "Ẩn danh";
+                  return (
+                    <div key={c.id} className="flex items-start gap-3 border-b pb-2">
+                      <div className="w-8">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>{(name || "A")[0]}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold">{name}</div>
+                        <div className="text-sm text-muted-foreground">{c.content}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {new Date(c.createdAt).toLocaleString('vi-VN')}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-muted-foreground">Chưa có bình luận nào.</p>
+              )}
+
+              {commentsHasMore && (
+                <div className="pt-2 text-center">
+                  <Button variant="ghost" size="sm" onClick={loadMoreComments} disabled={loadingComments}>
+                    Xem thêm bình luận
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// Post Skeleton giống Discover
+const PostSkeleton = () => (
+  <Card className="shadow-card">
+    <CardContent className="p-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+      </div>
+      <Skeleton className="h-16 w-full" />
+      <Skeleton className="h-48 w-full rounded-lg" />
+    </CardContent>
+  </Card>
+);
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -91,34 +381,57 @@ const Profile = () => {
   const [page, setPage] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
-  const [updatingPrivacy, setUpdatingPrivacy] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [targetIdentifier, setTargetIdentifier] = useState<number | string | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [sendingRequest, setSendingRequest] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState("");
+  const [savingBio, setSavingBio] = useState(false);
 
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Map API response to Post interface
-  const mapApiPost = (p: any): Post => ({
-    id: p.id,
-    content: p.content ?? "",
-    title: p.title,
-    image: Array.isArray(p.imageUrl) && p.imageUrl.length > 0 ? p.imageUrl[0] : p.imageUrl,
-    timestamp: p.createdAt ? new Date(p.createdAt).toLocaleString("vi-VN") : "",
-    likes: p.likeCount ?? p.likes ?? 0,
-    comments: p.commentCount ?? p.comments ?? 0,
-    isLiked: p.isLiked ?? false,
-    author: {
-      id: p.user?.id,
-      avatar: p.user?.avatar,
-      name: p.user?.fullName || p.user?.name || p.user?.username || "Ẩn danh",
-      major: p.user?.major,
-      username: p.user?.username,
-    },
-  });
+  const parseYobToYear = (yob: any): number | undefined => {
+    if (yob === null || yob === undefined) return undefined;
+    if (typeof yob === "number") return yob;
+    if (typeof yob === "string") {
+      const m1 = yob.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m1) return parseInt(m1[3], 10);
+      const m2 = yob.match(/^(\d{4})(?:-(\d{2})-(\d{2}))?$/);
+      if (m2) return parseInt(m2[1], 10);
+    }
+    return undefined;
+  };
+
+  // Convert API post to Post interface (giống Discover)
+  const convertApiPostToPost = useCallback((apiPost: ApiPost): Post => {
+    return {
+      id: apiPost.id,
+      content: apiPost.content,
+      title: apiPost.title,
+      images: apiPost.imageUrl || [],
+      timestamp: new Date(apiPost.createdAt).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      likes: apiPost.likeCount,
+      commentsCount: 0,
+      commentsList: [],
+      isLiked: false,
+      author: {
+        name: apiPost.user.fullName,
+        avatar: apiPost.user.avatar,
+        username: apiPost.user.username
+      }
+    };
+  }, []);
 
   // Load user profile
   const loadUserProfile = async (usernameParam?: string) => {
@@ -151,11 +464,10 @@ const Profile = () => {
         name: profileUser.fullName ?? profileUser.name ?? profileUser.username ?? "Người dùng",
         fullName: profileUser.fullName,
         avatar: profileUser.avatar,
-        job: profileUser.job ?? profileUser.major,
         location: profileUser.address ?? profileUser.location,
         isPrivate: profileUser.isPrivate ?? false,
         bio: profileUser.bio,
-        yob: profileUser.yob ? new Date(profileUser.yob).getFullYear() : undefined,
+        yob: parseYobToYear(profileUser.yob),
         gender: profileUser.gender,
         phone: profileUser.phone,
         email: profileUser.email,
@@ -166,7 +478,6 @@ const Profile = () => {
 
       setUser(userObj);
 
-      // Set target identifier for posts
       if (profileUser.id) {
         setTargetIdentifier(profileUser.id);
       } else if (profileUser.username) {
@@ -175,7 +486,6 @@ const Profile = () => {
         setTargetIdentifier(usernameToLoad);
       }
 
-      // Check if current user is owner
       if (typeof payload.isOwner === "boolean") {
         setIsOwner(payload.isOwner);
       } else {
@@ -183,7 +493,6 @@ const Profile = () => {
         setIsOwner(isUserOwner);
       }
 
-      // Load current user info
       if (loggedInUsername && !currentUser) {
         try {
           const currentUserRes = await api.get(`/api/users/profile/${encodeURIComponent(loggedInUsername)}`);
@@ -200,12 +509,36 @@ const Profile = () => {
         }
       }
 
-      // Handle posts from response
+      // Load posts
       if (Array.isArray(payload.posts)) {
-        const mappedPosts = payload.posts.map(mapApiPost);
-        setPosts(mappedPosts);
-        setPage(0);
-        setHasMore(mappedPosts.length >= 10);
+        const apiPosts: ApiPost[] = payload.posts;
+        const converted = apiPosts.map(convertApiPostToPost);
+        setPosts(converted);
+
+        // Fetch comments for each post
+        if (converted.length > 0) {
+          const fetches = converted.map(async (p) => {
+            try {
+              const r = await api.get(`/api/post/${p.id}/comments`, { params: { page: 0, size: 3 } });
+              const pageData = r.data?.data;
+              const content: CommentResp[] = pageData?.content || [];
+              const totalElements: number = pageData?.totalElements ?? (content.length);
+              return { postId: p.id, comments: content, count: totalElements };
+            } catch (err) {
+              console.error("Lỗi fetch comments for post", p.id, err);
+              return { postId: p.id, comments: [], count: 0 };
+            }
+          });
+
+          const results = await Promise.all(fetches);
+          setPosts((prev) =>
+            prev.map((p) => {
+              const r = results.find((x) => x.postId === p.id);
+              if (!r) return p;
+              return { ...p, commentsCount: r.count, commentsList: r.comments };
+            })
+          );
+        }
       } else {
         const identifierForPosts = profileUser.id ?? profileUser.username ?? usernameToLoad;
         await loadInitialPosts(identifierForPosts);
@@ -226,29 +559,222 @@ const Profile = () => {
     }
   };
 
+  // Load initial posts
+  const loadInitialPosts = async (identifier?: number | string) => {
+    const target = identifier ?? targetIdentifier;
+    if (!target) return;
+
+    setLoading(true);
+    try {
+      const identifierPath = typeof target === "number" ? target : encodeURIComponent(String(target));
+      const res = await api.get(`/api/post/user/${identifierPath}`, {
+        params: { page: 0, size: 10 },
+      });
+
+      const payload = res.data?.data ?? res.data ?? [];
+      const rawPosts = Array.isArray(payload) ? payload : payload.content ?? [];
+      const apiPosts: ApiPost[] = rawPosts;
+      const newPosts: Post[] = apiPosts.map(convertApiPostToPost);
+
+      setPosts(newPosts);
+
+      // Fetch comments for new posts
+      if (newPosts.length > 0) {
+        const fetches = newPosts.map(async (p) => {
+          try {
+            const r = await api.get(`/api/post/${p.id}/comments`, { params: { page: 0, size: 3 } });
+            const pageData = r.data?.data;
+            const content: CommentResp[] = pageData?.content || [];
+            const totalElements: number = pageData?.totalElements ?? content.length;
+            return { postId: p.id, comments: content, count: totalElements };
+          } catch (err) {
+            console.error("Lỗi fetch comments for post", p.id, err);
+            return { postId: p.id, comments: [], count: 0 };
+          }
+        });
+
+        const results = await Promise.all(fetches);
+        setPosts((prev) =>
+          prev.map((p) => {
+            const r = results.find((x) => x.postId === p.id);
+            if (!r) return p;
+            return { ...p, commentsCount: r.count, commentsList: r.comments };
+          })
+        );
+      }
+
+      setPage(0);
+      setHasMore(newPosts.length === 10);
+    } catch (e) {
+      console.error("loadInitialPosts error", e);
+      toast.error("Không thể tải bài viết");
+      setPosts([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load more posts
+  const loadMorePosts = async () => {
+    if (!targetIdentifier || loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const identifierPath = typeof targetIdentifier === "number"
+        ? targetIdentifier
+        : encodeURIComponent(String(targetIdentifier));
+
+      const res = await api.get(`/api/post/user/${identifierPath}`, {
+        params: { page: nextPage, size: 10 },
+      });
+
+      const payload = res.data?.data ?? res.data ?? [];
+      const rawPosts = Array.isArray(payload) ? payload : payload.content ?? [];
+      const apiPosts: ApiPost[] = rawPosts;
+      const newPosts: Post[] = apiPosts.map(convertApiPostToPost);
+
+      if (newPosts.length === 0) {
+        setHasMore(false);
+      } else {
+        setPosts((prev) => [...prev, ...newPosts]);
+
+        // Fetch comments for new posts
+        const fetches = newPosts.map(async (p) => {
+          try {
+            const r = await api.get(`/api/post/${p.id}/comments`, { params: { page: 0, size: 3 } });
+            const pageData = r.data?.data;
+            const content: CommentResp[] = pageData?.content || [];
+            const totalElements: number = pageData?.totalElements ?? content.length;
+            return { postId: p.id, comments: content, count: totalElements };
+          } catch (err) {
+            console.error("Lỗi fetch comments for post", p.id, err);
+            return { postId: p.id, comments: [], count: 0 };
+          }
+        });
+
+        const results = await Promise.all(fetches);
+        setPosts((prev) =>
+          prev.map((p) => {
+            const r = results.find((x) => x.postId === p.id);
+            if (!r) return p;
+            return { ...p, commentsCount: r.count, commentsList: r.comments };
+          })
+        );
+
+        setPage(nextPage);
+      }
+    } catch (error) {
+      console.error("loadMorePosts error", error);
+      toast.error("Không thể tải thêm bài viết");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Update comments for a single post
+  const refreshCommentsForPost = useCallback(async (postId: number) => {
+    try {
+      const r = await api.get(`/api/post/${postId}/comments`, { params: { page: 0, size: 10 } });
+      const pageData = r.data?.data;
+      const content: CommentResp[] = pageData?.content || [];
+      const totalElements: number = pageData?.totalElements ?? content.length;
+      setPosts((prev) => prev.map((p) => p.id === postId ? {
+        ...p,
+        commentsCount: totalElements,
+        commentsList: content
+      } : p));
+    } catch (err) {
+      console.error("Lỗi refresh comments for post", postId, err);
+    }
+  }, []);
+
+  // Post actions
+  const handleLike = useCallback(async (postId: number) => {
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      if (post.isLiked) {
+        await api.post(`/api/post/${postId}/dislike`);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? { ...p, isLiked: false, likes: Math.max(0, p.likes - 1) }
+              : p
+          )
+        );
+        toast.success("Đã bỏ like bài viết");
+      } else {
+        await api.post(`/api/post/${postId}/like`);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? { ...p, isLiked: true, likes: p.likes + 1 }
+              : p
+          )
+        );
+        toast.success("Đã like bài viết");
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+      toast.error("Không thể thực hiện thao tác");
+    }
+  }, [posts]);
+
+  const handleComment = useCallback(async (postId: number, content: string) => {
+    try {
+      const form = new FormData();
+      form.append("content", content.trim());
+
+      await api.post(`/api/post/${postId}/comment`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      await refreshCommentsForPost(postId);
+      toast.success("Đã gửi bình luận");
+    } catch (error) {
+      console.error("Error commenting:", error);
+      toast.error("Không thể gửi bình luận");
+      throw error;
+    }
+  }, [refreshCommentsForPost]);
+
+  const handlePostCreated = useCallback((newPost: Post) => {
+    setPosts((prev) => [newPost, ...prev]);
+    toast.success("Đã đăng bài");
+  }, []);
+
+  // Profile actions
   const handleUpdateProfile = async (updateData: any) => {
     setSavingProfile(true);
     try {
-      console.log("Sending update data:", updateData);
+      if (typeof updateData.bio === "string") {
+        try {
+          const patchRes = await api.patch("/api/users/bio", { bio: updateData.bio });
+          const patched = patchRes.data?.data ?? patchRes.data;
+          setUser((prev) => ({ ...(prev ?? {}), ...patched }));
+        } catch (err) {
+          console.error("Failed patching bio:", err);
+          throw err;
+        }
+      }
 
-      // Format yob thành LocalDate nếu cần
-      const formattedData = {
-        ...updateData,
-        yob: updateData.yob ? `${updateData.yob}-01-01` : null,
-      };
-
-      const response = await api.put("/api/users/update", formattedData);
-      const updatedUserData = response.data.data;
-
-      // Cập nhật state user
-      setUser(prev => ({
-        ...prev,
-        ...updatedUserData,
-        name: updatedUserData.fullName,
-        fullName: updatedUserData.fullName,
-        location: updatedUserData.address,
-        yob: updatedUserData.yob ? new Date(updatedUserData.yob).getFullYear() : undefined,
-      }));
+      const { bio, ...other } = updateData;
+      const hasOther = Object.keys(other).length > 0;
+      if (hasOther) {
+        const response = await api.put("/api/users/update", other);
+        const updatedUserData = response.data?.data ?? response.data;
+        setUser((prev) => ({
+          ...(prev ?? {}),
+          ...updatedUserData,
+          name: updatedUserData.fullName ?? updatedUserData.name ?? prev?.name,
+          fullName: updatedUserData.fullName ?? prev?.fullName,
+          location: updatedUserData.address ?? updatedUserData.location ?? prev?.location,
+          yob: parseYobToYear(updatedUserData.yob) ?? parseYobToYear(prev?.yob),
+        }));
+      }
 
       toast.success("Cập nhật thông tin thành công 🎉");
     } catch (error: any) {
@@ -266,10 +792,7 @@ const Profile = () => {
 
     try {
       setSendingRequest(true);
-
-      // SỬA: Dùng api instance thay vì fetch
       await api.post(`/api/friend/request?receiverUsername=${encodeURIComponent(user.username)}`);
-
       toast.success("Đã gửi lời mời kết bạn");
       setRequestSent(true);
     } catch (error: any) {
@@ -280,69 +803,36 @@ const Profile = () => {
     }
   };
 
-  // Load initial posts
-  const loadInitialPosts = async (identifier?: number | string) => {
-    const target = identifier ?? targetIdentifier;
-    if (!target) return;
+  const handleEditBio = () => {
+    setNewBio(user?.bio || "");
+    setEditingBio(true);
+  };
 
-    setLoading(true);
+  const handleSaveBio = async () => {
+    if (!newBio.trim()) {
+      toast.error("Tiểu sử không được để trống");
+      return;
+    } setSavingBio(true);
     try {
-      const identifierPath = typeof target === "number" ? target : encodeURIComponent(String(target));
-      const res = await api.get(`/api/post/user/${identifierPath}`, {
-        params: { page: 0, size: 10 },
-      });
+      const patchRes = await api.patch("/api/users/bio", { bio: newBio.trim() });
+      const updatedUser = patchRes.data?.data;
 
-      const payload = res.data?.data ?? res.data ?? [];
-      const rawPosts = Array.isArray(payload) ? payload : payload.content ?? [];
-      const newPosts: Post[] = rawPosts.map(mapApiPost);
-
-      setPosts(newPosts);
-      setPage(0);
-      setHasMore(newPosts.length === 10);
-    } catch (e) {
-      console.error("loadInitialPosts error", e);
-      toast.error("Không thể tải bài viết");
-      setPosts([]);
-      setHasMore(false);
+      setUser(prev => prev ? { ...prev, bio: newBio.trim() } : null);
+      setEditingBio(false);
+      toast.success("Cập nhật tiểu sử thành công 🎉");
+    } catch (error: any) {
+      console.error("Error updating bio:", error);
+      toast.error(error.response?.data?.message || "Không thể cập nhật tiểu sử");
     } finally {
-      setLoading(false);
+      setSavingBio(false);
     }
   };
 
-  // Load more posts for infinite scroll
-  const loadMorePosts = async () => {
-    if (!targetIdentifier || loadingMore || !hasMore) return;
-
-    setLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      const identifierPath = typeof targetIdentifier === "number"
-        ? targetIdentifier
-        : encodeURIComponent(String(targetIdentifier));
-
-      const res = await api.get(`/api/post/user/${identifierPath}`, {
-        params: { page: nextPage, size: 10 },
-      });
-
-      const payload = res.data?.data ?? res.data ?? [];
-      const rawPosts = Array.isArray(payload) ? payload : payload.content ?? [];
-      const newPosts: Post[] = rawPosts.map(mapApiPost);
-
-      if (newPosts.length === 0) {
-        setHasMore(false);
-      } else {
-        setPosts(prev => [...prev, ...newPosts]);
-        setPage(nextPage);
-      }
-    } catch (error) {
-      console.error("loadMorePosts error", error);
-      toast.error("Không thể tải thêm bài viết");
-    } finally {
-      setLoadingMore(false);
-    }
+  const handleCancelBio = () => {
+    setEditingBio(false);
+    setNewBio("");
   };
 
-  // Handle avatar upload
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -380,6 +870,7 @@ const Profile = () => {
       setUploadingAvatar(false);
     }
   };
+
   const handleAvatarUploadForDialog = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('avatar', file);
@@ -399,34 +890,7 @@ const Profile = () => {
     }
   };
 
-  // Handle post like
-  const handleLike = async (postId: number) => {
-    try {
-      const post = posts.find((p) => p.id === postId);
-      if (!post) return;
-
-      if (post.isLiked) {
-        await api.post(`/api/post/${postId}/dislike`);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId ? { ...p, isLiked: false, likes: p.likes - 1 } : p
-          )
-        );
-      } else {
-        await api.post(`/api/post/${postId}/like`);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId ? { ...p, isLiked: true, likes: p.likes + 1 } : p
-          )
-        );
-      }
-    } catch (error: any) {
-      console.error("Error liking post:", error);
-      toast.error(error.response?.data?.message || "Không thể thực hiện thao tác");
-    }
-  };
-
-  // Handle post delete
+  // Post management
   const handleDeleteClick = (postId: number) => {
     setPostToDelete(postId);
     setDeleteDialogOpen(true);
@@ -436,7 +900,7 @@ const Profile = () => {
     if (!postToDelete) return;
 
     try {
-      await api.delete(`/api/post/${postToDelete}`);
+      await api.delete(`/api/post/${postToDelete}/delete`);
       setPosts((prev) => prev.filter((p) => p.id !== postToDelete));
       toast.success("Đã xóa bài viết");
     } catch (error: any) {
@@ -448,41 +912,61 @@ const Profile = () => {
     }
   };
 
+  const openEditDialog = (post: Post) => {
+    setEditingPost(post);
+    setEditDialogOpen(true);
+  };
 
-  // Handle privacy toggle
-  const handlePrivacyToggle = async (newValue: boolean) => {
-    if (!isOwner) return;
-
-    const oldValue = user?.isPrivate || false;
-    setUpdatingPrivacy(true);
-
-    // Optimistic update
-    setUser((prev) => (prev ? { ...prev, isPrivate: newValue } : null));
-
+  const submitEditPost = async (postId: number, title: string, content: string, files: File[] | null) => {
     try {
-      await api.put("/api/users/profile", { isPrivate: newValue });
-      toast.success(newValue ? "Đã chuyển sang riêng tư" : "Đã chuyển sang công khai");
-    } catch (error) {
-      // Rollback on error
-      setUser((prev) => (prev ? { ...prev, isPrivate: oldValue } : null));
-      toast.error("Không thể cập nhật quyền riêng tư");
-    } finally {
-      setUpdatingPrivacy(false);
+      const form = new FormData();
+      form.append("title", title);
+      form.append("content", content);
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          form.append("image", files[i]);
+        }
+      }
+
+      const res = await api.put(`/api/post/${postId}`, form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const returned = res.data?.data ?? res.data;
+      const apiPost: ApiPost = returned;
+      const mapped = convertApiPostToPost(apiPost);
+
+      // Also fetch comments for the updated post
+      try {
+        const r = await api.get(`/api/post/${postId}/comments`, { params: { page: 0, size: 3 } });
+        const pageData = r.data?.data;
+        const content: CommentResp[] = pageData?.content || [];
+        const totalElements: number = pageData?.totalElements ?? content.length;
+        mapped.commentsCount = totalElements;
+        mapped.commentsList = content;
+      } catch (err) {
+        console.error("Lỗi fetch comments after edit", err);
+      }
+
+      setPosts((prev) => prev.map((p) => (p.id === postId ? mapped : p)));
+      toast.success("Đã cập nhật bài viết");
+      setEditDialogOpen(false);
+      setEditingPost(null);
+    } catch (err: any) {
+      console.error("Error updating post:", err);
+      toast.error(err?.response?.data?.message || "Không thể cập nhật bài viết");
+      throw err;
     }
   };
 
-  // Handle post created
-  const handlePostCreated = (newPost: Post) => {
-    setPosts((prev) => [newPost, ...prev]);
-  };
-
-  // Calculate age from year of birth
+  // Helper functions
   const calculateAge = (yob?: number) => {
     if (!yob) return null;
     return new Date().getFullYear() - yob;
   };
 
-  // Format gender display
   const formatGender = (gender?: string) => {
     switch (gender) {
       case 'male': return 'Nam';
@@ -495,6 +979,7 @@ const Profile = () => {
   // Effects
   useEffect(() => {
     loadUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeUsername]);
 
   useEffect(() => {
@@ -514,6 +999,7 @@ const Profile = () => {
     }
 
     return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, loadingMore, user, isOwner]);
 
   // Loading skeleton
@@ -619,12 +1105,6 @@ const Profile = () => {
 
             {isOwner ? (
               <div className="absolute top-4 right-4 flex gap-2">
-                <PrivacyToggle
-                  isPrivate={user.isPrivate || false}
-                  onToggle={handlePrivacyToggle}
-                  disabled={updatingPrivacy}
-                />
-
                 <EditProfileDialog
                   user={user}
                   onSave={handleUpdateProfile}
@@ -653,7 +1133,6 @@ const Profile = () => {
                 </Button>
               </div>
             )}
-
           </div>
         </Card>
 
@@ -666,23 +1145,61 @@ const Profile = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Giới thiệu</h2>
                   {isOwner && (
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEditBio}
+                      disabled={editingBio}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
 
-                <p className="text-sm text-muted-foreground italic leading-relaxed">
-                  {user.bio || "Chưa có tiểu sử"}
-                </p>
+                {editingBio ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={newBio}
+                      onChange={(e) => setNewBio(e.target.value)}
+                      placeholder="Nhập tiểu sử của bạn..."
+                      className="w-full min-h-[100px] p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      maxLength={500}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelBio}
+                        disabled={savingBio}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveBio}
+                        disabled={savingBio}
+                      >
+                        {savingBio ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                            Đang lưu...
+                          </>
+                        ) : (
+                          'Lưu'
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-right">
+                      {newBio.length}/500 ký tự
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic leading-relaxed">
+                    {user.bio || "Chưa có tiểu sử"}
+                  </p>
+                )}
 
                 <div className="space-y-3 pt-2">
-                  {user.job && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Briefcase className="h-4 w-4 text-muted-foreground" />
-                      <span>{user.job}</span>
-                    </div>
-                  )}
                   {user.location && (
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -783,121 +1300,53 @@ const Profile = () => {
               />
             )}
 
-            {posts.length === 0 && !loading && (
-              <Card className="shadow-card">
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  {isOwner ? "Bạn chưa có bài viết nào" : "Chưa có bài viết"}
-                </CardContent>
-              </Card>
-            )}
+            {loading && !loadingMore ? (
+              <>
+                <PostSkeleton />
+                <PostSkeleton />
+                <PostSkeleton />
+              </>
+            ) : (
+              <>
+                {posts.length === 0 && (
+                  <Card className="shadow-card">
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      {isOwner ? "Bạn chưa có bài viết nào" : "Chưa có bài viết"}
+                    </CardContent>
+                  </Card>
+                )}
 
-            {posts.map((post) => (
-              <Card key={post.id} className="shadow-card hover-scale transition-all">
-                <CardContent className="pt-6 space-y-4">
-                  {/* Post Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={post.author?.avatar} alt={post.author?.name} />
-                        <AvatarFallback>{post.author?.name?.[0] || "U"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{post.author?.name || "Ẩn danh"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {post.author?.major} • {post.timestamp}
-                        </p>
-                      </div>
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onLike={handleLike}
+                    onComment={handleComment}
+                    refreshCommentsForPost={refreshCommentsForPost}
+                    isOwner={isOwner}
+                    onEdit={openEditDialog}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+
+                {loadingMore && (
+                  <div className="py-8 text-center">
+                    <div className="inline-flex items-center gap-2 text-muted-foreground">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <span>Đang tải...</span>
                     </div>
-                    {isOwner && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(post.id)}
-                        className="text-destructive hover:text-destructive"
-                        aria-label="Xóa bài viết"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
+                )}
 
-                  {/* Post Content */}
-                  {post.title && (
-                    <h3 className="font-bold text-lg text-gray-900">{post.title}</h3>
-                  )}
-                  <p className="text-sm leading-relaxed whitespace-pre-line">{post.content}</p>
-
-                  {/* Post Image */}
-                  {post.image && (
-                    <div className="rounded-lg overflow-hidden border-2 border-white/50 shadow-lg">
-                      <img
-                        src={post.image}
-                        alt="Post"
-                        className="w-full h-auto object-cover max-h-[500px]"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Post Stats */}
-                  <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
-                    <span>{post.likes} lượt thích</span>
-                    <span>{post.comments} bình luận</span>
+                {!hasMore && posts.length > 0 && (
+                  <div className="py-8 text-center">
+                    <p className="text-muted-foreground">Hết bài rồi 💨</p>
                   </div>
+                )}
 
-                  {/* Post Actions */}
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Button
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={() => handleLike(post.id)}
-                    >
-                      <Heart
-                        className={`h-4 w-4 mr-2 ${post.isLiked ? "fill-red-500 text-red-500" : ""}`}
-                      />
-                      Thích
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={() => toast.info("Tính năng bình luận đang phát triển")}
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Bình luận
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={() => {
-                        navigator.clipboard.writeText(window.location.href);
-                        toast.success("Đã sao chép link bài viết");
-                      }}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Chia sẻ
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {/* Loading & End indicators */}
-            {loadingMore && (
-              <div className="text-center py-8">
-                <div className="inline-flex items-center gap-2 text-muted-foreground">
-                  <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
-                  <span>Đang tải...</span>
-                </div>
-              </div>
+                <div ref={observerTarget} className="h-4" />
+              </>
             )}
-
-            {!hasMore && posts.length > 0 && (
-              <div className="text-center py-8 text-muted-foreground">Hết bài rồi 💨</div>
-            )}
-
-            <div ref={observerTarget} className="h-4" />
           </div>
         </div>
       </main>
@@ -924,8 +1373,118 @@ const Profile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Post Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={(v) => { setEditDialogOpen(v); if (!v) setEditingPost(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa bài viết</DialogTitle>
+          </DialogHeader>
+
+          {editingPost ? (
+            <EditPostForm
+              post={editingPost}
+              onCancel={() => { setEditDialogOpen(false); setEditingPost(null); }}
+              onSave={submitEditPost}
+            />
+          ) : (
+            <div>Đang tải...</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+// EditPostForm component
+function EditPostForm({
+  post,
+  onCancel,
+  onSave,
+}: {
+  post: Post;
+  onCancel: () => void;
+  onSave: (postId: number, title: string, content: string, files: File[] | null) => Promise<void>;
+}) {
+  const [title, setTitle] = useState(post.title ?? "");
+  const [content, setContent] = useState(post.content ?? "");
+  const [files, setFiles] = useState<File[] | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setTitle(post.title ?? "");
+    setContent(post.content ?? "");
+    setFiles(null);
+  }, [post]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fls = e.target.files;
+    if (!fls) {
+      setFiles(null);
+      return;
+    }
+    const arr: File[] = [];
+    for (let i = 0; i < fls.length; i++) arr.push(fls[i]);
+    setFiles(arr);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Tiêu đề không được để trống");
+      return;
+    }
+    if (!content.trim()) {
+      toast.error("Nội dung không được để trống");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onSave(post.id, title.trim(), content.trim(), files);
+    } catch (err) {
+      // onSave toasts errors
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-1">Tiêu đề</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-md border p-2"
+          maxLength={50}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Nội dung</label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full rounded-md border p-2 min-h-[120px]"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Ảnh — có thể chọn nhiều</label>
+        <input type="file" accept="image/*" multiple onChange={handleFileChange} />
+        <div className="text-xs text-muted-foreground mt-2">
+          Chọn ảnh mới để thay thế / thêm. Nếu không chọn ảnh, ảnh hiện tại sẽ giữ nguyên (backend xử lý).
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel} disabled={submitting}>Hủy</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Đang lưu..." : "Lưu thay đổi"}
+        </Button>
+      </div>
+    </form>
+  );
+}
 
 export default Profile;
