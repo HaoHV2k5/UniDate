@@ -49,9 +49,9 @@ public class AuthService {
         User user = userRepo.findByUsername(loginRequest.getUsername())
                 .orElseThrow( () -> new AppException(ErrorCode.USER_NOT_EXISTED));
         // code tam de demo suggest function
-        boolean auth = user.getPassword().equals(loginRequest.getPassword());
-//        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-//        boolean auth = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
+        //boolean auth = user.getPassword().equals(loginRequest.getPassword());
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        boolean auth = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
         if(!auth){
             throw  new AppException(ErrorCode.LOGIN_FAIL);
         }

@@ -26,6 +26,7 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   // State cho các trái tim
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
@@ -66,8 +67,6 @@ const Login = () => {
     }, 600);
   };
 
-
-  ///////////////////////////////
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -76,6 +75,7 @@ const Login = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await api.post("/api/auth/login", {
         username: formData.email,
@@ -101,38 +101,37 @@ const Login = () => {
         localStorage.setItem("address", user.address || "");
         localStorage.setItem("phone", user.phone || "");
         localStorage.setItem("yob", user.yob || "");
+        localStorage.setItem("role", user.role || "");
       }
 
       // 🔹 Điều hướng
       setTimeout(() => {
-        const role = data.user?.role;
+        const role = user?.role;
         const isAdmin = role === "admin" || role === "ADMIN";
         navigate(isAdmin ? "/admin" : "/discover");
       }, 800);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Sai email hoặc mật khẩu");
+    } finally {
+      setLoading(false);
     }
   };
 
-
-
   const handleGoogleLogin = async () => {
     try {
+      setLoading(true);
       const token = await loginWithGoogle();
 
       const res = await api.post("/api/auth/firebase", { token });
 
-      const { accessToken, refreshToken } = res.data.data;
+      const data = res.data.data;
+      const { accessToken, refreshToken, user } = data;
 
       // lưu token backend
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
-      const data = res.data.data;
-      toast.success("Đăng nhập thành công!");
-
       // 🔹 Lưu thông tin user (từ backend trả về)
-      const user = data.user;
       if (user) {
         localStorage.setItem("userId", user.id);
         localStorage.setItem("username", user.username);
@@ -143,18 +142,18 @@ const Login = () => {
         localStorage.setItem("address", user.address || "");
         localStorage.setItem("phone", user.phone || "");
         localStorage.setItem("yob", user.yob || "");
+        localStorage.setItem("role", user.role || "");
       }
 
       toast.success("Đăng nhập bằng Google thành công!");
       navigate("/discover");
-    } catch (err) {
-      toast.error("Đăng nhập Google thất bại");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Đăng nhập Google thất bại");
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
-
-
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4 relative overflow-hidden">
@@ -179,7 +178,7 @@ const Login = () => {
         </div>
       ))}
 
-      {/* Form đăng nhập - giữ nguyên */}
+      {/* Form đăng nhập */}
       <Card className="w-full max-w-md shadow-hover relative z-20">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -203,6 +202,7 @@ const Login = () => {
                 placeholder="nguyenvana@gmail.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={loading}
               />
             </div>
 
@@ -219,18 +219,27 @@ const Login = () => {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                disabled={loading}
               />
             </div>
 
-            <Button type="submit" variant="hero" size="lg" className="w-full">
-              Đăng nhập
+            <Button
+              type="submit"
+              variant="hero"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
+
             <div className="flex gap-3 w-full">
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1 flex items-center justify-center gap-2 border rounded-xl py-2"
                 onClick={handleGoogleLogin}
+                disabled={loading}
               >
                 <img
                   src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -239,20 +248,6 @@ const Login = () => {
                 />
                 Google
               </Button>
-
-              {/* <Button
-                type="button"
-                variant="outline"
-                className="flex-1 flex items-center justify-center gap-2 border rounded-xl py-2"
-                onClick={handleFacebookLogin}
-              >
-                <img
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/facebook.svg"
-                  alt="Facebook"
-                  className="h-5 w-5"
-                />
-                Facebook
-              </Button> */}
             </div>
 
             <div className="text-center text-sm">
@@ -262,8 +257,6 @@ const Login = () => {
               </Link>
             </div>
           </form>
-
-
         </CardContent>
       </Card>
     </div>
