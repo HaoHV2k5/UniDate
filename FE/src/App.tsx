@@ -13,6 +13,9 @@ import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
+import Premium from "./pages/Premium";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFail from "./pages/PaymentFail";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 
@@ -36,6 +39,9 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/events" element={<Events />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/premium" element={<Premium />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-fail" element={<PaymentFail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

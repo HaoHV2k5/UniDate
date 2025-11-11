@@ -84,6 +84,14 @@ export const Navbar = () => {
                 Lịch hẹn
               </Button>
             </Link>
+            <Link to="/premium">
+              <Button
+                variant={isActive("/premium") ? "default" : "ghost"}
+                size="sm"
+              >
+                Premium
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -116,6 +124,9 @@ export const Navbar = () => {
                   <User className="mr-2 h-4 w-4" />
                   Hồ sơ
                 </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/premium">Nâng cấp/Premium</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/admin">Quản trị (Admin)</Link>
