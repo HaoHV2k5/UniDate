@@ -18,6 +18,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFail from "./pages/PaymentFail";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
+import Album from "./pages/Album";
+import AlbumRequests from "./pages/AlbumRequests";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/events" element={<Events />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/album" element={<Album />} />
+          <Route path="/album/requests" element={<AlbumRequests />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-fail" element={<PaymentFail />} />

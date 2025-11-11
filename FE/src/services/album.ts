@@ -42,6 +42,3 @@ export async function getApprovedAlbumRequests(page = 0, size = 10): Promise<Pag
   const res = await api.get<ApiResponse<Page<RequestAccessResponse>>>(`/api/albums/approved`, { params: { page, size } });
   return res.data.data;
 }
-album.ts
-+38
--0

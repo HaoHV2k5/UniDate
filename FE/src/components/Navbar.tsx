@@ -92,6 +92,14 @@ export const Navbar = () => {
                 Premium
               </Button>
             </Link>
+            <Link to="/album">
+              <Button
+                variant={isActive("/album") ? "default" : "ghost"}
+                size="sm"
+              >
+                Album
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -118,6 +126,9 @@ export const Navbar = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link to="/album/requests">Yêu cầu album</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/profile">
