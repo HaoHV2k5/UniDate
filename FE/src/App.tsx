@@ -14,6 +14,8 @@ import Chat from "./pages/Chat";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import AlbumPage from "./pages/Album";
+import AlbumRequests from "./pages/AlbumRequests";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,9 @@ const App = () => (
           <Route path="/matches" element={<Matches />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/album/:username" element={<AlbumPage />} />
+          <Route path="/album" element={<AlbumPage />} />
+          <Route path="/albums/requests" element={<AlbumRequests />} />
           <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
