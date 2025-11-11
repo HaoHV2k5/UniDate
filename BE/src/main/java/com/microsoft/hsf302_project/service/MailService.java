@@ -38,7 +38,7 @@ public class MailService {
         context.setVariable("name", name);
         context.setVariable("otp",otp);
         context.setVariable("originalEmail", to); // Thêm email gốc để hiển thị
-        String html = templateEngine.process("email/OTP-email",context);
+        String html = templateEngine.process("email/otp",context);
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, "UTF-8");
         

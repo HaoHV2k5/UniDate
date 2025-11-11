@@ -260,7 +260,9 @@ const Matches = () => {
     const fetchTopMatches = async () => {
       setLoadingTopMatches(true);
       try {
-        const res = await api.get("/api/users/suggest", { params: { size: 6 } });
+        console.log(Math.random())
+
+        const res = await api.get("/api/users/suggest", { params: { size: 3 } });
         const raw = res.data?.data ?? res.data ?? [];
         setTopMatches(Array.isArray(raw) ? raw.map(normalizeApiToUser) : []);
       } catch (err) {
