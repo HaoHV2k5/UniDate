@@ -35,10 +35,14 @@ const Register = () => {
     image: null as File | null,
   });
 
+  // Ảnh preview
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   // State cho các cánh hoa anh đào
   const [blossoms, setBlossoms] = useState<CherryBlossom[]>([]);
 
   // Tạo cánh hoa mới
+  // Tạo cánh hoa mới - SỬA CODE Ở ĐÂY
   const createBlossom = (): CherryBlossom => {
     const rand = Math.random();
 
@@ -53,6 +57,9 @@ const Register = () => {
       y = Math.random() * -20;
     }
 
+
+    const blossomType = Math.random() > 0.5 ? "🌸" : "🌸";
+
     return {
       id: Date.now() + Math.random(),
       x,
@@ -62,8 +69,43 @@ const Register = () => {
       opacity: Math.random() * 0.3 + 0.6,
       speedX: Math.random() * 0.12 + 0.03,
       speedY: Math.random() * 0.12 + 0.08,
+      type: "🌸",
     };
   };
+
+  // Interface cập nhật
+  interface CherryBlossom {
+    id: number;
+    x: number;
+    y: number;
+    size: number;
+    rotation: number;
+    opacity: number;
+    speedX: number;
+    speedY: number;
+    type: string; // THÊM DÒNG NÀY
+  }
+
+
+  {
+    blossoms.map((blossom) => (
+      <div
+        key={blossom.id}
+        className="absolute pointer-events-none"
+        style={{
+          left: `${blossom.x}%`,
+          top: `${blossom.y}%`,
+          fontSize: `${blossom.size}px`,
+          opacity: blossom.opacity,
+          transform: `rotate(${blossom.rotation}deg)`,
+          zIndex: 10,
+          color: `hsl(330, 70%, 75%)`,
+        }}
+      >
+        {blossom.type} {/* SỬA THÀNH blossom.type */}
+      </div>
+    ))
+  }
 
   useEffect(() => {
     const initialBlossoms = Array.from({ length: 6 }, createBlossom);
@@ -74,8 +116,8 @@ const Register = () => {
     let animationFrameId: number;
 
     const updateBlossoms = () => {
-      setBlossoms(prevBlossoms =>
-        prevBlossoms.map(blossom => {
+      setBlossoms((prevBlossoms) =>
+        prevBlossoms.map((blossom) => {
           let newX = blossom.x - blossom.speedX;
           let newY = blossom.y + blossom.speedY;
           let newRotation = blossom.rotation + 0.3;
@@ -97,29 +139,34 @@ const Register = () => {
     };
 
     animationFrameId = requestAnimationFrame(updateBlossoms);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+    return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       if (blossoms.length < 40) {
-        setBlossoms(prev => [...prev, createBlossom()]);
+        setBlossoms((prev) => [...prev, createBlossom()]);
       }
     }, 2000);
-
     return () => clearInterval(interval);
   }, [blossoms.length]);
 
   // helper: format yyyy-mm-dd -> dd/MM/yyyy (backend định dạng dd/MM/yyyy)
   const formatYobToDdMmYyyy = (isoDate: string) => {
     if (!isoDate) return "";
-    // isoDate expected "yyyy-mm-dd"
     const [y, m, d] = isoDate.split("-");
     if (!y || !m || !d) return isoDate;
     return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData({ ...formData, image: file });
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,7 +198,6 @@ const Register = () => {
       toast.loading("Đang xử lý...");
 
       const data = new FormData();
-
       data.append("fullName", formData.fullName);
       data.append("email", formData.email);
       data.append("password", formData.password);
@@ -160,21 +206,12 @@ const Register = () => {
       data.append("yob", formatYobToDdMmYyyy(formData.yob));
       data.append("phone", formData.phone || "");
       data.append("address", formData.address || "");
-
       if (formData.image) {
         data.append("image", formData.image);
       }
 
-      // Debug: Log tất cả các field trong FormData
-      console.log("FormData contents:");
-      for (let [key, value] of data.entries()) {
-        console.log(key, value instanceof File ? `File: ${value.name}` : value);
-      }
-
       await api.post("api/auth/register", data, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.dismiss();
@@ -189,6 +226,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-soft p-4 relative overflow-hidden">
+      {/* 🌸 Animation hoa anh đào */}
       {blossoms.map((blossom) => (
         <div
           key={blossom.id}
@@ -200,12 +238,10 @@ const Register = () => {
             opacity: blossom.opacity,
             transform: `rotate(${blossom.rotation}deg)`,
             zIndex: 10,
-            transition: 'transform 0.2s linear, opacity 0.2s linear',
             color: `hsl(330, 70%, 75%)`,
-            willChange: 'transform, opacity',
           }}
         >
-          {Math.random() > 0.5 ? '🌸' : '💮'}
+          {Math.random() > 0.5 ? "🌸" : "💮"}
         </div>
       ))}
 
@@ -221,6 +257,7 @@ const Register = () => {
             Tham gia UniDate để bắt đầu kết nối
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -327,15 +364,23 @@ const Register = () => {
                 <Input
                   id="image"
                   type="file"
-                  name="image" // THÊM DÒNG NÀY - QUAN TRỌNG
+                  name="image"
                   accept="image/*"
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.files?.[0] || null })
-                  }
+                  onChange={handleImageChange}
                   className="cursor-pointer"
                 />
                 <Upload className="h-5 w-5 text-muted-foreground" />
               </div>
+
+              {imagePreview && (
+                <div className="mt-3 flex justify-center">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-24 h-24 rounded-full object-cover shadow-md border"
+                  />
+                </div>
+              )}
             </div>
 
             <Button type="submit" variant="hero" size="lg" className="w-full">

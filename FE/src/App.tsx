@@ -14,6 +14,7 @@ import Chat from "./pages/Chat";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/events" element={<Events />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
