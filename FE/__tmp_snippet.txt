@@ -1,0 +1,12 @@
+﻿              <DropdownMenuItem asChild>
+                <Link to="/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  Há»“ sÆ¡
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/premium">NÃ¢ng cáº¥p/Premium</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin">Quáº£n trá»‹ (Admin)</Link>
+              </DropdownMenuItem>
