@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Thêm import này
 import { Navbar } from "@/components/Navbar";
 import { MobileNav } from "@/components/MobileNav";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,12 +116,12 @@ const MatchCardSkeleton = () => (
 const MatchCard = ({
   user,
   onSendRequest,
+  onViewProfile, // Thêm prop mới
 }: {
   user: NearbyUser;
   onSendRequest: (username: string) => void;
+  onViewProfile: (username: string) => void; // Thêm prop mới
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   return (
     <Card className="shadow-card hover-lift transition-all duration-300 hover:shadow-xl border-0">
       <CardContent className="p-6">
@@ -200,41 +201,15 @@ const MatchCard = ({
           </div>
         )}
 
-        {/* Chi tiết thêm */}
-        {showDetails && (
-          <div className="mt-4 space-y-2 border-t pt-4">
-            <div className="grid grid-cols-1 gap-2 text-sm">
-              {user.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{user.email}</span>
-                </div>
-              )}
-              {user.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{user.phone}</span>
-                </div>
-              )}
-              {user.yob && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Sinh năm: {new Date(user.yob).getFullYear()}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => setShowDetails(!showDetails)}
+            onClick={() => onViewProfile(user.username ?? "")}
             size="sm"
           >
-            {showDetails ? 'Ẩn chi tiết' : 'Xem chi tiết'}
+            Xem trang cá nhân
           </Button>
           <Button
             className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 shadow-lg"
@@ -251,6 +226,7 @@ const MatchCard = ({
 };
 
 const Matches = () => {
+  const navigate = useNavigate(); // Thêm hook navigate
   const [topMatches, setTopMatches] = useState<NearbyUser[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<NearbyUser[]>([]);
   const [loadingTopMatches, setLoadingTopMatches] = useState(true);
@@ -333,6 +309,15 @@ const Matches = () => {
     }
   };
 
+  // Thêm hàm xử lý xem trang cá nhân
+  const goToProfile = (username: string) => {
+    if (!username) {
+      toast.error("Không tìm thấy thông tin người dùng");
+      return;
+    }
+    navigate(`/profile/${encodeURIComponent(username)}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-soft pb-20 md:pb-0">
       <Navbar />
@@ -379,6 +364,7 @@ const Matches = () => {
                   key={user.id}
                   user={user}
                   onSendRequest={handleSendRequest}
+                  onViewProfile={goToProfile} // Truyền prop mới
                 />
               ))
             ) : (
@@ -439,6 +425,7 @@ const Matches = () => {
                 key={user.id}
                 user={user}
                 onSendRequest={handleSendRequest}
+                onViewProfile={goToProfile} // Truyền prop mới
               />
             ))}
           </div>
