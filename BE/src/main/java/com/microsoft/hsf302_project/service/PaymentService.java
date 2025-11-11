@@ -321,6 +321,15 @@ public class PaymentService {
 
 
 
+    public BigDecimal getBalanceAdmin(){
+        User user = userRepository.findUserByRole("ADMIN");
+        if(user == null){
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
+        Wallet walletAdmin = walletRepository.findByUserId(user.getId()).get();
+        return walletAdmin.getBalance();
+    }
+
 
 
 

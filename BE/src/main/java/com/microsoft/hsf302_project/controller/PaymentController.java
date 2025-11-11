@@ -3,7 +3,9 @@ package com.microsoft.hsf302_project.controller;
 
 import com.microsoft.hsf302_project.dto.request.BuyPackageRequest;
 import com.microsoft.hsf302_project.dto.response.ApiResponse;
+import com.microsoft.hsf302_project.dto.response.WalletTransactionResponse;
 import com.microsoft.hsf302_project.service.PaymentService;
+import com.microsoft.hsf302_project.service.WalletTransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,6 +25,7 @@ import java.util.Map;
 
 public class PaymentController {
     private final PaymentService paymentService;
+    private final WalletTransactionService walletTransactionService;
 
     // nap vao vi
 
@@ -69,6 +73,16 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+
+
+    @GetMapping("/wallet-transaction/admin")
+    public ApiResponse<List<WalletTransactionResponse>> getWalletTransactions() {
+
+        return ApiResponse.<List<WalletTransactionResponse>>builder()
+                .message("đã lấy biến đồng số dư ví admin thành công")
+                .data(walletTransactionService.getWalletTransactionResponseList())
+                .build();
+    }
 
 
 
