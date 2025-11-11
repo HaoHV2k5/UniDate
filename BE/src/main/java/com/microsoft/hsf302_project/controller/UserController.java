@@ -98,14 +98,14 @@ public class UserController {
     }
 
 
-    @GetMapping
-    public ApiResponse<List<UserResponse>> getAllUser(){
-        List<UserResponse> list = userService.getAllUser();
-        return  ApiResponse.<List<UserResponse>>builder()
-                .message("đã lấy tất cả user")
-                .data(list)
-                .build();
-    }
+//    @GetMapping
+//    public ApiResponse<List<UserResponse>> getAllUser(){
+//        List<UserResponse> list = userService.getAllUser();
+//        return  ApiResponse.<List<UserResponse>>builder()
+//                .message("đã lấy tất cả user")
+//                .data(list)
+//                .build();
+//    }
 
     // API: Gợi ý bạn bè cho người dùng hiện tại
     @GetMapping("/suggest")

@@ -44,9 +44,10 @@ public class UserService {
     private final NotificationService notificationService;
 
     public List<UserResponse> getAllUsers() {
-        return userRepo.findAll().stream()
-                .map(userMapper::toUserResponse)
-                .toList();
+        List<User> users = userRepo.findAll();
+        User admin = userRepo.findUserByRole("ADMIN");
+        users.remove(admin);
+        return users.stream().map(userMapper::toUserResponse).collect(Collectors.toList());
     }
 
     public UserResponse getUserById(Long id) {
