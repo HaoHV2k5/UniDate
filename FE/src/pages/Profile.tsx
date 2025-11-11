@@ -1473,7 +1473,7 @@ function EditPostForm({
         <label className="block text-sm font-medium mb-1">Ảnh — có thể chọn nhiều</label>
         <input type="file" accept="image/*" multiple onChange={handleFileChange} />
         <div className="text-xs text-muted-foreground mt-2">
-          Chọn ảnh mới để thay thế / thêm. Nếu không chọn ảnh, ảnh hiện tại sẽ giữ nguyên (backend xử lý).
+          Chọn ảnh mới để thay thế / thêm.
         </div>
       </div>
 

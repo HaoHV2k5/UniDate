@@ -44,7 +44,7 @@ public class FriendService {
     }
 
     public void acceptFriendRequest(String receiverUsername, Long requestId) {
-        FriendRequest request = friendRequestRepo.findById(requestId)
+        FriendRequest request = friendRequestRepo.findByReceiver_UsernameAndSenderId(receiverUsername,requestId)
                 .orElseThrow(() -> new AppException(ErrorCode.FRIEND_REQUEST_NOT_FOUND));
         if (!request.getReceiver().getUsername().equals(receiverUsername)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
@@ -56,7 +56,7 @@ public class FriendService {
     }
 
     public void rejectFriendRequest(String receiverUsername, Long requestId) {
-        FriendRequest request = friendRequestRepo.findById(requestId)
+        FriendRequest request = friendRequestRepo.findByReceiver_UsernameAndSenderId(receiverUsername,requestId)
                 .orElseThrow(() -> new AppException(ErrorCode.FRIEND_REQUEST_NOT_FOUND));
         if (!request.getReceiver().getUsername().equals(receiverUsername)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
