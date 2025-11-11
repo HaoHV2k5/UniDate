@@ -15,17 +15,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/NotificationBell";
 
-
 export const Navbar = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   const navigate = useNavigate();
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
 
   useEffect(() => {
     const avatar = localStorage.getItem('avatar');
+    const fullname = localStorage.getItem('fullName');
+
     if (avatar) {
       setAvatarSrc(avatar);
+    }
+    if (fullname) {
+      setFullName(fullname);
     }
   }, []);
 
@@ -33,6 +38,9 @@ export const Navbar = () => {
     localStorage.clear();
     navigate("/login");
   };
+
+  // Kiểm tra nếu userName là admin (có thể điều chỉnh logic này)
+  const isAdmin = fullName?.toLowerCase().includes('ADMIN') || fullName === 'ADMIN';
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -120,12 +128,16 @@ export const Navbar = () => {
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar>
                   <AvatarImage src={avatarSrc} alt="User" />
-                  <AvatarFallback>NA</AvatarFallback>
+                  <AvatarFallback>
+                    {fullName ? fullName.charAt(0).toUpperCase() : 'U'}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {fullName || 'Tài khoản của tôi'}
+              </DropdownMenuLabel>
               <DropdownMenuItem asChild>
                 <Link to="/album/requests">Yêu cầu album</Link>
               </DropdownMenuItem>
@@ -133,15 +145,20 @@ export const Navbar = () => {
               <DropdownMenuItem asChild>
                 <Link to="/profile">
                   <User className="mr-2 h-4 w-4" />
-                  Hồ sơ
+                  Trang cá nhân
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/premium">Nâng cấp/Premium</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin">Quản trị (Admin)</Link>
-              </DropdownMenuItem>
+
+              {/* Chỉ hiển thị mục Quản trị nếu là admin */}
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link to="/admin">Quản trị (Admin)</Link>
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
