@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,7 +25,10 @@ public class Post {
     @Column(nullable = false,columnDefinition = "NVARCHAR(50)")
     private String title;
 
-    private List<String> imageUrl;
+    @ElementCollection
+    @CollectionTable(name = "post_images", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "image_url", columnDefinition = "NVARCHAR(1024)")
+    private List<String> imageUrl = new ArrayList<>();
 
     private LocalDateTime createdAt;
 
@@ -40,6 +44,12 @@ public class Post {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private PostStatus status = PostStatus.VISIBLE;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -6,7 +5,7 @@ import { MobileNav } from "@/components/MobileNav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share2, Plus } from "lucide-react";
+import { Heart, MessageCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ interface Post {
   id: number;
   content: string;
   title: string;
-  image: string | null;
+  images: string[]; // <-- changed: store all images
   timestamp: string;
   likes: number;
   commentsCount: number;
@@ -91,14 +90,12 @@ interface PostCardProps {
   post: Post;
   onLike: (postId: number) => Promise<void>;
   onComment: (postId: number, content: string) => Promise<void>;
-  onShare: (postId: number) => void;
   refreshCommentsForPost: (postId: number) => Promise<void>;
 }
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 
-// PostCard component: shows post + comment preview + comment list (avatar)
-const PostCard = ({ post, onLike, onComment, onShare, refreshCommentsForPost }: PostCardProps) => {
+const PostCard = ({ post, onLike, onComment, refreshCommentsForPost }: PostCardProps) => {
   const navigate = useNavigate();
 
   const [showComments, setShowComments] = useState(false);
@@ -169,7 +166,6 @@ const PostCard = ({ post, onLike, onComment, onShare, refreshCommentsForPost }: 
             aria-label={`Xem profile ${authorName}`}
           >
             <Avatar className="h-10 w-10">
-              {/* keep author avatar as-is */}
               <AvatarImage src={avatarSrc} alt={authorName} />
               <AvatarFallback>{authorName[0]}</AvatarFallback>
             </Avatar>
@@ -178,7 +174,7 @@ const PostCard = ({ post, onLike, onComment, onShare, refreshCommentsForPost }: 
           <div className="flex-1">
             <h3 className="font-semibold text-sm">{authorName}</h3>
             <p className="text-xs text-muted-foreground">
-              {authorMajor} • {post.timestamp}
+              {post.timestamp}
             </p>
           </div>
         </div>
@@ -187,17 +183,33 @@ const PostCard = ({ post, onLike, onComment, onShare, refreshCommentsForPost }: 
 
         <p className="text-sm leading-relaxed">{post.content}</p>
 
-        {post.image && (
-          <div className="rounded-lg overflow-hidden">
-            <img
-              src={post.image}
-              alt="Post image"
-              className="w-full h-auto object-cover rounded-lg max-h-[500px]"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          </div>
+        {/* Images: show single large image if only 1, otherwise a grid up to 4 */}
+        {post.images && post.images.length > 0 && (
+          <>
+            {post.images.length === 1 ? (
+              <div className="rounded-lg overflow-hidden">
+                <img
+                  src={post.images[0]}
+                  alt="Post image"
+                  className="w-full h-auto object-cover rounded-lg max-h-[500px]"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {post.images.slice(0, 4).map((src, idx) => (
+                  <div key={idx} className="overflow-hidden rounded-lg">
+                    <img
+                      src={src}
+                      alt={`Post image ${idx + 1}`}
+                      className="w-full h-40 object-cover rounded-lg"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
@@ -226,10 +238,7 @@ const PostCard = ({ post, onLike, onComment, onShare, refreshCommentsForPost }: 
             <MessageCircle className="h-4 w-4 mr-2" />
             Bình luận
           </Button>
-          <Button variant="ghost" size="sm" className="flex-1" onClick={() => onShare(post.id)}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Chia sẻ
-          </Button>
+          {/* Share button removed as requested */}
         </div>
 
         {showComments && (
@@ -249,8 +258,6 @@ const PostCard = ({ post, onLike, onComment, onShare, refreshCommentsForPost }: 
               />
               <Button onClick={handleSubmitComment} disabled={loadingComments}>Gửi</Button>
             </div>
-
-            {/* NOTE: removed small avatar row preview (no <img> tags) */}
 
             {/* list */}
             <div className="space-y-2 max-h-60 overflow-auto mt-2">
@@ -309,7 +316,7 @@ const Discover = () => {
       id: apiPost.id,
       content: apiPost.content,
       title: apiPost.title,
-      image: apiPost.imageUrl?.[0] || null,
+      images: apiPost.imageUrl || [], // <-- store array of images
       timestamp: new Date(apiPost.createdAt).toLocaleDateString('vi-VN', {
         day: '2-digit',
         month: '2-digit',
@@ -484,16 +491,6 @@ const Discover = () => {
     }
   }, [refreshCommentsForPost]);
 
-  const handleShare = useCallback(async (postId: number) => {
-    try {
-      await navigator.clipboard.writeText(window.location.href + `#/post/${postId}`);
-      toast.success("Đã sao chép link bài viết");
-    } catch (error) {
-      console.error("Error sharing:", error);
-      toast.error("Không thể sao chép link");
-    }
-  }, []);
-
   const handlePostCreated = useCallback((newPost: Post) => {
     setPosts((prev) => [newPost, ...prev]);
     toast.success("Đã đăng bài");
@@ -556,7 +553,6 @@ const Discover = () => {
                 post={post}
                 onLike={handleLike}
                 onComment={handleComment}
-                onShare={handleShare}
                 refreshCommentsForPost={refreshCommentsForPost}
               />
             ))}

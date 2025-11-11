@@ -1,4 +1,3 @@
-// components/EditProfileDialog.tsx
 import React, { useEffect, useState } from "react";
 import {
     Dialog,
@@ -19,8 +18,9 @@ interface UserProfile {
     id?: number;
     username?: string;
     name?: string;
-    fullName?: string;
-    age?: number;
+    fullName?: string; // UI side camelCase
+    // yob kept as ISO string (yyyy-MM-dd) internally for <input type="date"/>
+    yob?: string | number; // accept legacy number year or ISO string
     avatar?: string;
     isPrivate?: boolean;
     bio?: string;
@@ -28,26 +28,56 @@ interface UserProfile {
     location?: string;
     address?: string;
     interests?: string[];
-    albumPhotos?: string[];
-    yob?: number;
     gender?: string;
     phone?: string;
     email?: string;
-    major?: string;
 }
 
 interface EditProfileDialogProps {
     user?: UserProfile;
     onSave?: (updatedData: any) => void | Promise<void>;
     onAvatarUpload?: (file: File) => Promise<string>;
-    /** optional trigger node. If omitted, parent must control open via `open` + `onOpenChange`. */
     trigger?: React.ReactNode;
-    /** controlled open (optional) */
     open?: boolean;
-    /** controlled onOpenChange (optional) */
     onOpenChange?: (v: boolean) => void;
     loading?: boolean;
 }
+
+// --- helpers for date formatting ---
+const isoFromIncoming = (val?: string | number): string | undefined => {
+    if (!val && val !== 0) return undefined;
+    if (typeof val === "number") return `${val}-01-01`;
+    // dd/MM/yyyy -> yyyy-MM-dd
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(String(val))) {
+        const [d, m, y] = String(val).split("/");
+        return `${y}-${m}-${d}`;
+    }
+    // yyyy -> yyyy-01-01
+    if (/^\d{4}$/.test(String(val))) return `${val}-01-01`;
+    // already ISO
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(val))) return String(val);
+    return String(val);
+};
+
+const to_ddMMyyyy = (iso?: string): string | undefined => {
+    if (!iso) return undefined;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return undefined;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
+const calcAge = (iso?: string) => {
+    if (!iso) return 0;
+    const birth = new Date(iso);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+};
 
 export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
     user,
@@ -58,7 +88,6 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
     onOpenChange,
     loading = false,
 }) => {
-    // uncontrolled state (used when parent doesn't control open)
     const [internalOpen, setInternalOpen] = useState(false);
     const isControlled = typeof open === "boolean";
     const openState = isControlled ? open! : internalOpen;
@@ -70,24 +99,27 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         }
     };
 
-    // editedUser holds form fields; initialize from `user` whenever dialog opens
     const [editedUser, setEditedUser] = useState<UserProfile | null>(() =>
-        user ? { ...user } : null
+        user
+            ? {
+                ...user,
+                yob: isoFromIncoming(user.yob),
+                interests: user.interests ? [...user.interests] : [],
+            }
+            : null
     );
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
     useEffect(() => {
         if (openState && user) {
-            setEditedUser({ ...user });
+            setEditedUser({ ...user, yob: isoFromIncoming(user.yob), interests: user.interests ? [...user.interests] : [] });
         }
-        // if dialog closed, reset editedUser to null to avoid stale data
         if (!openState) {
             setEditedUser(null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [openState, user]);
 
-    // Provide a fallback displayUser so component still renders trigger even if editedUser not set yet
     const displayUser = editedUser ?? user ?? ({} as UserProfile);
 
     // Avatar upload
@@ -119,58 +151,97 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         }
     };
 
-    // Save handler: supports sync or async onSave; closes dialog after success
+    // Interests - simple tag input
+    const [interestInput, setInterestInput] = useState("");
+    const addInterest = (val?: string) => {
+        const v = (val ?? interestInput).trim();
+        if (!v) return;
+        setEditedUser((prev) => {
+            const next = prev ?? ({} as UserProfile);
+            const arr = next.interests ? [...next.interests] : [];
+            if (!arr.includes(v)) arr.push(v);
+            return { ...next, interests: arr };
+        });
+        setInterestInput("");
+    };
+    const removeInterest = (val: string) =>
+        setEditedUser((prev) => ({ ...(prev ?? ({} as UserProfile)), interests: (prev?.interests ?? []).filter((i) => i !== val) }));
+
+    // validation regex same as backend
+    const phoneRegex = /^(84|0[35789])[0-9]{8}\b/;
+
     const handleSave = async () => {
         if (!editedUser) return;
 
-        const updateData = {
-            fullname: editedUser.fullName || editedUser.name,
-            gender: editedUser.gender,
-            yob: editedUser.yob,
-            phone: editedUser.phone,
-            address: editedUser.address || editedUser.location,
-            avatar: editedUser.avatar,
-            bio: editedUser.bio,
-        };
+        // client-side validation
+        if (!((editedUser.fullName ?? editedUser.name ?? "").trim())) {
+            toast.error("Họ và tên không được để trống");
+            return;
+        }
+
+        const isoYob = editedUser.yob as string | undefined;
+        if (!isoYob) {
+            toast.error("Ngày sinh không được để trống");
+            return;
+        }
+        const age = calcAge(isoYob);
+        if (age < 18) {
+            toast.error("Bạn phải từ 18 tuổi trở lên");
+            return;
+        }
+
+        const phoneVal = (editedUser.phone ?? "").trim();
+        if (phoneVal && !phoneRegex.test(phoneVal)) {
+            toast.error("Số điện thoại không hợp lệ");
+            return;
+        }
+
+        // Prepare payload matching UpdateUserRequest (server expects dd/MM/yyyy for yob)
+        const payload = {
+            fullname: editedUser.fullName ?? editedUser.name ?? "",
+            gender: editedUser.gender ?? null,
+            yob: to_ddMMyyyy(isoYob),
+            phone: phoneVal || null,
+            address: editedUser.address ?? editedUser.location ?? null,
+            avatar: editedUser.avatar ?? null,
+            interests: editedUser.interests ?? [],
+        } as any;
 
         try {
-            const maybePromise = onSave?.(updateData);
-            if (maybePromise instanceof Promise) {
-                await maybePromise;
-            }
+            const maybePromise = onSave?.(payload);
+            if (maybePromise instanceof Promise) await maybePromise;
             toast.success("Đã lưu thay đổi");
             setOpenState(false);
         } catch (err: any) {
             console.error("Save failed:", err);
             toast.error(err?.message || "Lưu thất bại");
-            // keep dialog open so user can retry
         }
     };
 
     const handleCancel = () => {
-        // reset editedUser to original user snapshot and close
-        setEditedUser(user ? { ...user } : null);
+        setEditedUser(user ? { ...user, yob: isoFromIncoming(user.yob), interests: user.interests ? [...user.interests] : [] } : null);
         setOpenState(false);
     };
 
-    // unique id for file input to avoid collisions when multiple dialogs exist
     const fileInputId = `edit-avatar-upload-${user?.id ?? "anon"}`;
+
+    // compute max date for input date (must be at least 18 years old)
+    const maxDateForYob = (() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 18);
+        return d.toISOString().slice(0, 10); // yyyy-mm-dd
+    })();
 
     return (
         <Dialog open={openState} onOpenChange={setOpenState}>
-            {trigger ? (
-                <DialogTrigger asChild>{trigger}</DialogTrigger>
-            ) : null}
+            {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-center">
-                        Chỉnh sửa thông tin cá nhân
-                    </DialogTitle>
+                    <DialogTitle className="text-2xl font-bold text-center">Chỉnh sửa thông tin cá nhân</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
-                    {/* Avatar */}
                     <div className="flex flex-col items-center space-y-4">
                         <div className="relative">
                             <Avatar className="h-24 w-24 ring-4 ring-blue-100">
@@ -180,13 +251,7 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                                 </AvatarFallback>
                             </Avatar>
 
-                            <input
-                                type="file"
-                                id={fileInputId}
-                                accept="image/*"
-                                onChange={handleAvatarUpload}
-                                className="hidden"
-                            />
+                            <input type="file" id={fileInputId} accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                             <label
                                 htmlFor={fileInputId}
                                 className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-blue-500 hover:bg-blue-600 border-2 border-white shadow-lg cursor-pointer flex items-center justify-center transition-all duration-300 hover:scale-110"
@@ -202,7 +267,6 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                         <p className="text-sm text-gray-500">Nhấn để thay đổi ảnh đại diện</p>
                     </div>
 
-                    {/* Form */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-4">
                             <div>
@@ -235,20 +299,18 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
 
                             <div>
                                 <Label htmlFor="yob" className="text-sm font-medium text-gray-700 mb-2">
-                                    Năm sinh
+                                    Ngày sinh
                                 </Label>
                                 <Input
                                     id="yob"
-                                    type="number"
-                                    value={displayUser.yob ?? ""}
-                                    onChange={(e) =>
-                                        setEditedUser((prev) => ({ ...(prev ?? displayUser), yob: parseInt(e.target.value) || undefined }))
-                                    }
+                                    type="date"
+                                    value={displayUser.yob ? String(displayUser.yob) : ""}
+                                    onChange={(e) => setEditedUser((prev) => ({ ...(prev ?? displayUser), yob: e.target.value }))}
                                     className="rounded-lg"
-                                    placeholder="Nhập năm sinh"
-                                    min={1900}
-                                    max={new Date().getFullYear()}
+                                    placeholder="Nhập ngày sinh"
+                                    max={maxDateForYob}
                                 />
+                                <p className="text-xs text-gray-500 mt-1">Bạn phải từ 18 tuổi trở lên.</p>
                             </div>
                         </div>
 
@@ -289,33 +351,38 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                                 <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2">
                                     Email
                                 </Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    value={displayUser.email ?? ""}
-                                    className="rounded-lg bg-gray-50"
-                                    placeholder="Email"
-                                    disabled
-                                />
+                                <Input id="email" type="email" value={displayUser.email ?? ""} className="rounded-lg bg-gray-50" placeholder="Email" disabled />
                                 <p className="text-xs text-gray-500 mt-1">Email không thể thay đổi</p>
                             </div>
                         </div>
                     </div>
 
+                    {/* Interests */}
                     <div>
-                        <Label htmlFor="bio" className="text-sm font-medium text-gray-700 mb-2">
-                            Tiểu sử
-                        </Label>
-                        <Textarea
-                            id="bio"
-                            value={displayUser.bio ?? ""}
-                            onChange={(e) => setEditedUser((prev) => ({ ...(prev ?? displayUser), bio: e.target.value }))}
-                            placeholder="Giới thiệu về bản thân..."
-                            className="rounded-lg min-h-[100px] resize-none"
-                            maxLength={500}
-                        />
-                        <div className="text-xs text-gray-500 mt-1 text-right">
-                            {(displayUser.bio?.length ?? 0)}/500 ký tự
+                        <Label className="text-sm font-medium text-gray-700 mb-2">Sở thích</Label>
+                        <div className="flex gap-2 items-center">
+                            <Input
+                                placeholder="Thêm sở thích và nhấn Enter"
+                                value={interestInput}
+                                onChange={(e) => setInterestInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        addInterest();
+                                    }
+                                }}
+                            />
+                            <Button variant="outline" onClick={() => addInterest()} disabled={!interestInput.trim()}>
+                                Thêm
+                            </Button>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {(displayUser.interests ?? []).map((it) => (
+                                <div key={it} className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded-full text-sm">
+                                    <span>{it}</span>
+                                    <button onClick={() => removeInterest(it)} className="ml-1 text-xs text-gray-500">x</button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -334,5 +401,3 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         </Dialog>
     );
 };
-
-
