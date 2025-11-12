@@ -91,6 +91,7 @@ const Admin = () => {
     password: "",
     confirmPassword: "",
     fullName: "",
+    gender: "MALE",
     role: "USER",
   });
 
@@ -110,6 +111,10 @@ const Admin = () => {
     }
     if (!name) {
       toast.error("Vui lòng nhập họ tên");
+      return;
+    }
+    if (!createForm.gender) {
+      toast.error("Vui lòng chọn giới tính");
       return;
     }
     if (!createForm.password) {
@@ -163,24 +168,36 @@ const Admin = () => {
                       onChange={(e) => setCreateForm((f) => ({ ...f, fullName: e.target.value }))}
                     />
                   </div>
-                  <div className="grid gap-2 md:grid-cols-2">
-                    <div className="grid gap-2">
-                      <label>Mật khẩu</label>
-                      <Input
-                        type="password"
-                        value={createForm.password}
-                        onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label>Nhập lại mật khẩu</label>
-                      <Input
-                        type="password"
-                        value={createForm.confirmPassword}
-                        onChange={(e) => setCreateForm((f) => ({ ...f, confirmPassword: e.target.value }))}
-                      />
-                    </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <label>Mật khẩu</label>
+                    <Input
+                      type="password"
+                      value={createForm.password}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                    />
                   </div>
+                  <div className="grid gap-2">
+                    <label>Nhập lại mật khẩu</label>
+                    <Input
+                      type="password"
+                      value={createForm.confirmPassword}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <label>Giới tính</label>
+                  <Select value={createForm.gender} onValueChange={(v) => setCreateForm((f) => ({ ...f, gender: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn giới tính" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                   <div className="grid gap-2">
                     <label>Vai trò</label>
                     <Select value={createForm.role} onValueChange={(v) => setCreateForm((f) => ({ ...f, role: v }))}>

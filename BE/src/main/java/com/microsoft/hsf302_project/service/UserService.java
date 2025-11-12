@@ -156,6 +156,8 @@ public class UserService {
                     u.setFullName(request.getFullName());
                     u.setRole(request.getRole() != null ? request.getRole() : "USER");
                     u.setEmail(request.getUsername());
+                    // set gender (required by entity)
+                    u.setGender(request.getGender() != null ? request.getGender() : "OTHER");
                     return u;
                 }
         );
