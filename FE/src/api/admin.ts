@@ -2,27 +2,28 @@ import api from "./api";
 import type { ApiResponse, Paged, UserCreatePayload, UserResponse, UserUpdatePayload, CommentResponse, LikeResponse } from "@/types/api";
 
 export async function getUsers(): Promise<UserResponse[]> {
-  const res = await api.get<ApiResponse<UserResponse[]>>("/api/users");
+  // BE AdminController => base "/apis"
+  const res = await api.get<ApiResponse<UserResponse[]>>("/apis/user/all");
   return res.data.data ?? [];
 }
 
 export async function getUserById(id: number): Promise<UserResponse> {
-  const res = await api.get<ApiResponse<UserResponse>>(`/api/users/admin/${id}`);
+  const res = await api.get<ApiResponse<UserResponse>>(`/apis/user/${id}`);
   return res.data.data;
 }
 
 export async function createUser(payload: UserCreatePayload): Promise<UserResponse> {
-  const res = await api.post<ApiResponse<UserResponse>>("/api/users/admin", payload);
+  const res = await api.post<ApiResponse<UserResponse>>("/apis", payload);
   return res.data.data;
 }
 
 export async function updateUser(id: number, payload: UserUpdatePayload): Promise<UserResponse> {
-  const res = await api.put<ApiResponse<UserResponse>>(`/api/users/admin/${id}`, payload);
+  const res = await api.put<ApiResponse<UserResponse>>(`/apis/${id}`, payload);
   return res.data.data;
 }
 
 export async function deleteUser(id: number): Promise<void> {
-  await api.delete<ApiResponse<void>>(`/api/users/admin/${id}`);
+  await api.delete<ApiResponse<void>>(`/apis/${id}`);
 }
 
 // Admin metrics helpers: read totalElements from paged endpoints using size=1
