@@ -194,17 +194,10 @@ public class PaymentService {
             String responseCode = request.getParameter("vnp_ResponseCode");
 
             if ("00".equals(responseCode)) {
-                String orderInfo = request.getParameter("vnp_OrderInfo");
-                BigDecimal amount = new BigDecimal(request.getParameter("vnp_Amount")).divide(BigDecimal.valueOf(100))
-                        .setScale(2, BigDecimal.ROUND_HALF_UP);
-                Long packageId = 1L;
-                if (orderInfo != null) {
-                    packageId = Long.parseLong(orderInfo);
-                }
 
-                if (amount.compareTo(BigDecimal.valueOf(premiumPackageRepo.findById(packageId).get().getPrice())) < 0) {
-                    throw new AppException(ErrorCode.BALANCE_NOT_VALID);
-                }
+
+
+//
 
                 result = "success";
             } else {
@@ -265,9 +258,9 @@ public class PaymentService {
                    packageId = Long.parseLong(orderInfo);
                 }
 
-                if (amount.compareTo(BigDecimal.valueOf(premiumPackageRepo.findById(packageId).get().getPrice())) < 0) {
-                    throw new AppException(ErrorCode.BALANCE_NOT_VALID);
-                }
+//                if (amount.compareTo(BigDecimal.valueOf(premiumPackageRepo.findById(packageId).get().getPrice())) < 0) {
+//                    throw new AppException(ErrorCode.BALANCE_NOT_VALID);
+//                }
 
 
                 walletTx.setStatus(WalletTransactionStatus.COMPLETED.name());
