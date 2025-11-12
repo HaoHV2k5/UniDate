@@ -22,11 +22,13 @@ export interface UserCreatePayload {
   password: string;
   confirmPassword: string;
   fullName?: string;
+  gender?: string;
   role?: string; // default USER on BE if missing
 }
 
 export interface UserUpdatePayload {
   fullName?: string;
+  gender?: string;
   role?: string;
 }
 
