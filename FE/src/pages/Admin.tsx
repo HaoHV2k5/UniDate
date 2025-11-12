@@ -96,6 +96,33 @@ const Admin = () => {
 
   const [editForm, setEditForm] = useState<UserUpdatePayload>({ fullName: "", role: "USER" });
 
+  const handleCreateUser = () => {
+    const email = createForm.username?.trim();
+    const name = createForm.fullName?.trim();
+    if (!email) {
+      toast.error("Vui lòng nhập email");
+      return;
+    }
+    const emailRegex = /.+@.+\..+/;
+    if (!emailRegex.test(email)) {
+      toast.error("Email không hợp lệ");
+      return;
+    }
+    if (!name) {
+      toast.error("Vui lòng nhập họ tên");
+      return;
+    }
+    if (!createForm.password) {
+      toast.error("Vui lòng nhập mật khẩu");
+      return;
+    }
+    if (createForm.password !== createForm.confirmPassword) {
+      toast.error("Mật khẩu và Nhập lại mật khẩu không khớp");
+      return;
+    }
+    createMut.mutate(createForm);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-soft">
       <Navbar />
@@ -171,8 +198,8 @@ const Admin = () => {
                       Hủy
                     </Button>
                     <Button
-                      onClick={() => createMut.mutate(createForm)}
-                      disabled={createMut.isPending || !createForm.username || !createForm.password || createForm.password !== createForm.confirmPassword}
+                      onClick={handleCreateUser}
+                      disabled={createMut.isPending}
                     >
                       Tạo
                     </Button>
