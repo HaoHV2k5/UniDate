@@ -101,18 +101,38 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:3000", "http://localhost:3979", "https://*.ngrok-free.dev"));
 
-        configuration.setAllowedMethods(Arrays.asList("GET","POST","PATCH","PUT","DELETE","OPTIONS"));
-        configuration.setAllowCredentials(Boolean.valueOf(true));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization","Cache-Control","Content-Type"));
+        // Cho phép FE localhost và domain ngrok
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost:3979",
+                "https://*.ngrok-free.dev"
+        ));
+
+        // Các method được phép
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        // Cho phép mọi header
+        configuration.addAllowedHeader("*");
+
+        // Cho phép cookie/session gửi kèm
+        configuration.setAllowCredentials(true);
+
+        // Nếu muốn, có thể set expose headers (vd: Authorization)
+        configuration.addExposedHeader("Authorization");
+
+        // Áp dụng cho toàn bộ route
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**",configuration);
-        return source;
+        source.registerCorsConfiguration("/**", configuration);
 
+        return source;
     }
+
 //@Bean
 //public CorsConfigurationSource corsConfigurationSource() {
 //    CorsConfiguration configuration = new CorsConfiguration();
