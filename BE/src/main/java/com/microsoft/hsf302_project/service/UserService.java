@@ -428,6 +428,8 @@ public class UserService {
 
     public List<UserResponse> autocompleteByName(String keyword) {
         List<User> list =  userRepo.findTop10ByFullNameContainingIgnoreCase(keyword);
+        User admin = userRepo.findUserByRole("ADMIN");
+        list.remove(admin);
         return list.stream().map(userMapper::toUserResponse).collect(Collectors.toList());
     }
 
