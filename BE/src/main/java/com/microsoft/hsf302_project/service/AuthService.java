@@ -137,6 +137,7 @@ public class AuthService {
                     .fullName(acc.getName())
                     .avatar(acc.getPicture())
                     .role("USER")
+                    .gender("MALE")
                     .username(acc.getEmail())
                     .isVerified(true)
                     .build();

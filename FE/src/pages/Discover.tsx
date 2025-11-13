@@ -266,11 +266,14 @@ const PostCard = ({ post, onLike, onComment, refreshCommentsForPost }: PostCardP
               ) : comments.length > 0 ? (
                 comments.map((c) => {
                   const name = c.userName ?? (c.user && (c.user as any).fullName) ?? "Ẩn danh";
+                  const avatarUrl = c.avatar || c.userAvatar || (c.user && c.user.avatar);
                   return (
                     <div key={c.id} className="flex items-start gap-3 border-b pb-2">
                       <div className="w-8">
-                        {/* only show fallback initial — DO NOT load avatar image from comment */}
                         <Avatar className="h-8 w-8">
+                          {avatarUrl ? (
+                            <AvatarImage src={avatarUrl} alt={name} />
+                          ) : null}
                           <AvatarFallback>{(name || "A")[0]}</AvatarFallback>
                         </Avatar>
                       </div>

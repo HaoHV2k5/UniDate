@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Heart, MessageCircle, Calendar, User, Search, Home } from "lucide-react";
+import { Heart, MessageCircle, Calendar, User, Search, Home, Search as SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/NotificationBell";
+import api from "@/api/api"; // Đảm bảo đã có
 
 export const Navbar = () => {
   const location = useLocation();
@@ -21,6 +22,8 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [autoResults, setAutoResults] = useState<any[]>([]);
 
   useEffect(() => {
     const avatar = localStorage.getItem('avatar');
@@ -37,6 +40,20 @@ export const Navbar = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
+  };
+
+  const handleAutocomplete = async (value: string) => {
+    setSearchText(value);
+    if (!value.trim()) {
+      setAutoResults([]);
+      return;
+    }
+    try {
+      const res = await api.get("/api/users/autocomplete", { params: { keyword: value } });
+      setAutoResults(res.data.data || []);
+    } catch {
+      setAutoResults([]);
+    }
   };
 
   // Kiểm tra nếu userName là admin (có thể điều chỉnh logic này)
@@ -112,16 +129,45 @@ export const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 max-w-sm">
-            <div className="relative flex-1">
+          <div className="hidden md:flex items-center gap-2 max-w-sm relative">
+            <div className="flex-1 relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Tìm người..."
                 className="pl-8"
+                value={searchText}
+                onChange={e => handleAutocomplete(e.target.value)}
               />
+              {autoResults.length > 0 && (
+                <div
+                  className="absolute left-0 right-0 mt-2 max-h-80 overflow-y-auto rounded-xl shadow-xl border border-gray-200 bg-white z-50 animate-fadeIn"
+                >
+                  {autoResults.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors duration-100 hover:bg-gray-200"
+                      onClick={() => navigate(`/profile/${encodeURIComponent(user.username)}`)}
+                    >
+                      {user.avatar ? (
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={user.avatar} alt={user.fullName} />
+                          <AvatarFallback>{user.fullName ? user.fullName[0] : "U"}</AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-300">
+                          <SearchIcon size={20} className="text-gray-600" />
+                        </div>
+                      )}
+                      <span className="font-semibold text-base truncate max-w-[140px]">{user.fullName}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
+
+
           <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

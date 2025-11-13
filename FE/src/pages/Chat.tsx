@@ -386,7 +386,7 @@ export default function ChatFriends() {
                       {selectedFriend ? (selectedFriend.fullName ?? selectedFriend.username) : 'Chọn bạn để bắt đầu'}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      {selectedFriend ? 'Đang hoạt động' : '—'}
+                      {selectedFriend ? '' : '—'}
                     </p>
                   </div>
                 </div>

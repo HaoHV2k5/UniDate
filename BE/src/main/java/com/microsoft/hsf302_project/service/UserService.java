@@ -424,4 +424,17 @@ public class UserService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
+
+
+    public List<UserResponse> autocompleteByName(String keyword) {
+        List<User> list =  userRepo.findTop10ByFullNameContainingIgnoreCase(keyword);
+        User admin = userRepo.findUserByRole("ADMIN");
+        list.remove(admin);
+        return list.stream().map(userMapper::toUserResponse).collect(Collectors.toList());
+    }
+
+    public List<UserResponse> searchByName(String name) {
+        List<User> res = userRepo.findByFullNameContainingIgnoreCase(name);
+        return res.stream().map(userMapper::toUserResponse).collect(Collectors.toList());
+    }
 }
