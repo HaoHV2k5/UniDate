@@ -42,8 +42,6 @@ public class SecurityConfig {
             "/tag/**",
             "/api/users/forgot-password",
             "/api/users/reset-password",
-
-
             "/api/payment/vnpay-return",
             "/api/payment/create",
             "https://freddie-forestial-tiny.ngrok-free.dev/api/payment/ipn",
