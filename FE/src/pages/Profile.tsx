@@ -34,10 +34,12 @@ import {
   Phone,
   User,
   Calendar,
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/api/api";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { uploadAlbumImages, viewAlbum, requestAlbumAccess } from "@/services/album";
 
 // Interfaces giống với Discover
 interface ApiPost {
@@ -392,8 +394,16 @@ const Profile = () => {
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState("");
   const [savingBio, setSavingBio] = useState(false);
+  const [albumPhotos, setAlbumPhotos] = useState<string[]>([]);
+  const [albumLoading, setAlbumLoading] = useState(false);
+  const [albumFiles, setAlbumFiles] = useState<File[]>([]);
+  const [uploadingAlbum, setUploadingAlbum] = useState(false);
+  const [albumRequesting, setAlbumRequesting] = useState(false);
+  const [albumAccessRequested, setAlbumAccessRequested] = useState(false);
+  const [albumError, setAlbumError] = useState<string | null>(null);
 
   const observerTarget = useRef<HTMLDivElement>(null);
+  const albumFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const parseYobToYear = (yob: any): number | undefined => {
     if (yob === null || yob === undefined) return undefined;
@@ -477,6 +487,9 @@ const Profile = () => {
       };
 
       setUser(userObj);
+      setAlbumPhotos(userObj.albumPhotos || []);
+      setAlbumAccessRequested(false);
+      setAlbumError(null);
 
       if (profileUser.id) {
         setTargetIdentifier(profileUser.id);
@@ -558,6 +571,51 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  const getRequesterId = () => {
+    if (isOwner && user?.id) return user.id;
+    if (currentUser?.id) return currentUser.id;
+    const stored = Number(localStorage.getItem("userId") || "0");
+    if (!stored || Number.isNaN(stored)) return null;
+    return stored;
+  };
+
+  const refreshAlbumPhotos = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!user?.id) return;
+      const ownerId = user.id;
+      const requesterId = getRequesterId();
+      const silent = options?.silent ?? false;
+
+      if (!requesterId) {
+        if (!silent) toast.error("B���n cA7n �`��ng nh��-p �`��� xem album nA�y");
+        return;
+      }
+
+      try {
+        setAlbumError(null);
+        setAlbumLoading(true);
+        const images = await viewAlbum(ownerId, requesterId);
+        setAlbumPhotos(images);
+        setUser((prev) => (prev ? { ...prev, albumPhotos: images } : prev));
+      } catch (err: any) {
+        console.error("Failed to load album", err);
+        setAlbumPhotos([]);
+        const defaultMsg = "KhA'ng th��� t���i album";
+        if (err?.response?.status === 403) {
+          setAlbumError("Album nA�y �`ang �?���c bA�o v���. HA�y g��-i yA�u cA7u A?�A? xem.");
+          if (!silent) toast.error("Album �`ang bA�o m��t, vui lA�ng g��-i yA�u cA7u truy c��-p.");
+        } else {
+          const message = err?.response?.data?.message || defaultMsg;
+          setAlbumError(message);
+          if (!silent) toast.error(message);
+        }
+      } finally {
+        setAlbumLoading(false);
+      }
+    },
+    [user?.id, isOwner, currentUser?.id]
+  );
 
   // Load initial posts
   const loadInitialPosts = async (identifier?: number | string) => {
@@ -670,6 +728,65 @@ const Profile = () => {
       toast.error("Không thể tải thêm bài viết");
     } finally {
       setLoadingMore(false);
+    }
+  };
+
+  const handleAlbumFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files ? Array.from(event.target.files) : [];
+    setAlbumFiles(selected);
+  };
+
+  const clearSelectedAlbumFiles = () => {
+    setAlbumFiles([]);
+    if (albumFileInputRef.current) {
+      albumFileInputRef.current.value = "";
+    }
+  };
+
+  const handleAlbumUpload = async () => {
+    if (!isOwner || !user?.id) return;
+    if (albumFiles.length === 0) {
+      toast.error("HA�y ch��?n �`�����c nhA\'t m��?t ���nh");
+      return;
+    }
+
+    try {
+      setUploadingAlbum(true);
+      await uploadAlbumImages(user.id, albumFiles);
+      toast.success("�?A� t���i ���nh lA�n album");
+      clearSelectedAlbumFiles();
+      await refreshAlbumPhotos();
+    } catch (err: any) {
+      console.error("Upload album failed", err);
+      toast.error(err?.response?.data?.message || "KhA'ng t���i lA�n �`�����c ���nh");
+    } finally {
+      setUploadingAlbum(false);
+    }
+  };
+
+  const handleRequestAlbumAccess = async () => {
+    if (!user?.id || isOwner) return;
+    const requesterId = currentUser?.id || (() => {
+      const stored = Number(localStorage.getItem("userId") || "0");
+      return stored && !Number.isNaN(stored) ? stored : null;
+    })();
+
+    if (!requesterId) {
+      toast.error("B���n cA7n �`��ng nh��-p �`��� g��-i yA�u cA7u");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setAlbumRequesting(true);
+      await requestAlbumAccess(user.id, requesterId);
+      toast.success("�?A� g��-i yA�u cA7u truy c��-p album");
+      setAlbumAccessRequested(true);
+    } catch (err: any) {
+      console.error("Album access request failed", err);
+      toast.error(err?.response?.data?.message || "KhA'ng g��-i �`�����c yA�u cA7u");
+    } finally {
+      setAlbumRequesting(false);
     }
   };
 
@@ -983,6 +1100,12 @@ const Profile = () => {
   }, [routeUsername]);
 
   useEffect(() => {
+    if (!user?.id) return;
+    if (!isOwner && !currentUser?.id) return;
+    refreshAlbumPhotos({ silent: true });
+  }, [user?.id, isOwner, currentUser?.id, refreshAlbumPhotos]);
+
+  useEffect(() => {
     if (!hasMore || loadingMore || !user || (user.isPrivate && !isOwner)) return;
 
     const observer = new IntersectionObserver(
@@ -1252,34 +1375,112 @@ const Profile = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">Album ảnh</h2>
-                  {isOwner && (
-                    <Button variant="ghost" size="sm">
-                      <ImageIcon className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => refreshAlbumPhotos()}
+                    disabled={albumLoading}
+                    title="Làm mới album"
+                  >
+                    <RefreshCcw className={`h-4 w-4 ${albumLoading ? "animate-spin" : ""}`} />
+                  </Button>
                 </div>
 
-                {user.albumPhotos && user.albumPhotos.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {user.albumPhotos.slice(0, 6).map((photo, idx) => (
-                      <div
-                        key={idx}
-                        className="aspect-square rounded-lg overflow-hidden hover-scale cursor-pointer"
+                {isOwner ? (
+                  <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Quản lý album và tải ảnh ngay trên trang cá nhân của bạn.
+                    </p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={uploadingAlbum}
+                      onChange={handleAlbumFileChange}
+                      ref={albumFileInputRef}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={handleAlbumUpload} disabled={uploadingAlbum || albumFiles.length === 0}>
+                        {uploadingAlbum ? "Đang tải..." : "Tải ảnh lên"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={clearSelectedAlbumFiles}
+                        disabled={albumFiles.length === 0 || uploadingAlbum}
                       >
-                        <img
-                          src={photo}
-                          alt={`Album ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
+                        Xóa lựa chọn
+                      </Button>
+                    </div>
+                    {albumFiles.length > 0 && (
+                      <p className="text-xs text-muted-foreground">{albumFiles.length} ảnh đang được chọn</p>
+                    )}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    Chưa có ảnh nào
+                  <div className="rounded-xl border bg-muted/30 p-4 space-y-3 text-sm text-muted-foreground">
+                    <p>
+                      {albumPhotos.length > 0
+                        ? "Những ảnh bạn đã được cấp quyền xem."
+                        : albumError || "Album này có thể đang được bảo vệ. Gửi yêu cầu để xem thêm."}
+                    </p>
+                    {!albumPhotos.length && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={albumLoading}
+                          onClick={() => refreshAlbumPhotos()}
+                        >
+                          Thử tải lại
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRequestAlbumAccess}
+                          disabled={albumRequesting || albumAccessRequested}
+                        >
+                          {albumRequesting
+                            ? "Đang gửi..."
+                            : albumAccessRequested
+                              ? "Đã gửi yêu cầu"
+                              : "Gửi yêu cầu xem album"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
+
+                <div>
+                  {albumLoading ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {Array.from({ length: 6 }).map((_, idx) => (
+                        <Skeleton key={`album-skeleton-${idx}`} className="h-28 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : albumPhotos.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {albumPhotos.slice(0, 6).map((photo, idx) => (
+                        <div
+                          key={idx}
+                          className="aspect-square rounded-lg overflow-hidden hover-scale cursor-pointer"
+                        >
+                          <img
+                            src={photo}
+                            alt={`Album ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      {albumError || "Chưa có ảnh nào"}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>

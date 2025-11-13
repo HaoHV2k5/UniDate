@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Navbar } from "@/components/Navbar";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import type { UserCreatePayload, UserResponse, UserUpdatePayload, CommentRespons
 
 const Admin = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState<null | number>(null);
@@ -97,6 +98,11 @@ const Admin = () => {
 
   const [editForm, setEditForm] = useState<UserUpdatePayload>({ fullName: "", role: "USER" });
 
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
   const handleCreateUser = () => {
     const email = createForm.username?.trim();
     const name = createForm.fullName?.trim();
@@ -130,7 +136,13 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-soft">
-      <Navbar />
+      <header className="border-b bg-background/90">
+        <div className="container flex justify-end px-4 py-4 max-w-7xl">
+          <Button variant="outline" onClick={handleLogout}>
+            Đăng xuất
+          </Button>
+        </div>
+      </header>
 
       <main className="container px-4 py-8 max-w-7xl">
         <div className="space-y-6">
