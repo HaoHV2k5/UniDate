@@ -158,4 +158,23 @@ public class UserController {
         List<NearbyUserResponse> list = userService.findUsersWithinRadiusKm(id, radiusKm);
         return ResponseEntity.ok(list);
     }
+
+    @GetMapping("/autocomplete")
+    public ApiResponse<List<UserResponse>> autocomplete(@RequestParam String keyword) {
+        List<UserResponse> response = userService.autocompleteByName(keyword);
+        return ApiResponse.<List<UserResponse>>builder()
+                .data(response)
+                .message("Autocomplete successfully")
+                .build();
+    }
+
+
+    @GetMapping("/search")
+    public ApiResponse<List<UserResponse>> searchStudents(@RequestParam String name) {
+        List<UserResponse> res = userService.searchByName(name);
+        return ApiResponse.<List<UserResponse>>builder()
+                .data(res)
+                .message("Search successfully")
+                .build();
+    }
 }
