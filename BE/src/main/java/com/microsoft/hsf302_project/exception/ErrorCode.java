@@ -61,7 +61,7 @@ public enum ErrorCode {
     PREMIUM_NOT_EXIST(1058, "Chưa có mua goí premium", HttpStatus.BAD_REQUEST),
     BALANCE_NOT_VALID(1059, "Số tiền nạp không đủ để mua gói Premium", HttpStatus.BAD_REQUEST),
 
-
+    UPLOAD_AVATAR_FAILED(1060, "Cập nhật avatar thất bại",HttpStatus.CONFLICT),
 
     ;
     private int code;

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class UserService {
     private final FriendService friendService;
     private final AlbumService albumService;
     private final NotificationService notificationService;
+    private final CloudinaryService cloudinaryService;
 
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepo.findAll();
@@ -357,6 +359,22 @@ public class UserService {
         return userMapper.toUserResponse(savedUser);
     }
 
+    public UserResponse updateAvatar(Long userId, MultipartFile avatar) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        try {
+            // Upload lên Cloudinary
+            String imageUrl = cloudinaryService.upload(avatar);
+
+            // Cập nhật avatar URL
+            user.setAvatar(imageUrl);
+            User savedUser = userRepo.save(user);
+            return userMapper.toUserResponse(savedUser);
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.UPLOAD_AVATAR_FAILED);
+        }
+    }
     public UserResponse updateUserLocation(Long userId, LocationUpdateRequest request) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));

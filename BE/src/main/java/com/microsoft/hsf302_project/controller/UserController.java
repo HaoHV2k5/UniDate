@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -141,6 +142,24 @@ public class UserController {
                 .build();
     }
 
+    @PostMapping("/{id}/avatar")
+    public ApiResponse<UserResponse> updateAvatar(
+            Authentication authentication,
+            @PathVariable Long id,
+            @ModelAttribute UpdateAvatarRequest request
+    ) {
+        String username = authentication.getName();
+        Long currentUserId = userService.getIdByUsername(username);
+        if (!currentUserId.equals(id)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        UserResponse updatedUser = userService.updateAvatar(id, request.getAvatar());
+
+        return ApiResponse.<UserResponse>builder()
+                .data(updatedUser)
+                .message("Cập nhật avatar thành công")
+                .build();
+    }
 
     @PutMapping("/{id}/location")
     public ResponseEntity<UserResponse> updateUserLocation(
