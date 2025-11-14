@@ -8,7 +8,7 @@ import { createVnpayPayment } from "@/api/payment";
 import { toast } from "sonner";
 
 const Premium = () => {
-  const [amount, setAmount] = useState<number>(50000);
+  const [amount, setAmount] = useState<number>(100000);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");

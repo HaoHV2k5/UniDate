@@ -588,7 +588,7 @@ const Profile = () => {
       const silent = options?.silent ?? false;
 
       if (!requesterId) {
-        if (!silent) toast.error("B���n cA7n �`��ng nh��-p �`��� xem album nA�y");
+        if (!silent) toast.error("Bạn cần đăng nhập để xem album này");
         return;
       }
 
@@ -601,10 +601,10 @@ const Profile = () => {
       } catch (err: any) {
         console.error("Failed to load album", err);
         setAlbumPhotos([]);
-        const defaultMsg = "KhA'ng th��� t���i album";
+        const defaultMsg = "Không thể tải album";
         if (err?.response?.status === 403) {
-          setAlbumError("Album nA�y �`ang �?���c bA�o v���. HA�y g��-i yA�u cA7u A?�A? xem.");
-          if (!silent) toast.error("Album �`ang bA�o m��t, vui lA�ng g��-i yA�u cA7u truy c��-p.");
+          setAlbumError("Album này đang được bảo vệ. Hãy gửi yêu cầu để xem.");
+          if (!silent) toast.error("Album đang bảo mật, vui lòng gửi yêu cầu truy cập.");
         } else {
           const message = err?.response?.data?.message || defaultMsg;
           setAlbumError(message);
@@ -746,19 +746,19 @@ const Profile = () => {
   const handleAlbumUpload = async () => {
     if (!isOwner || !user?.id) return;
     if (albumFiles.length === 0) {
-      toast.error("HA�y ch��?n �`�����c nhA\'t m��?t ���nh");
+      toast.error("Hãy chọn ít nhất một ảnh");
       return;
     }
 
     try {
       setUploadingAlbum(true);
       await uploadAlbumImages(user.id, albumFiles);
-      toast.success("�?A� t���i ���nh lA�n album");
+      toast.success("Đã tải ảnh lên album");
       clearSelectedAlbumFiles();
       await refreshAlbumPhotos();
     } catch (err: any) {
       console.error("Upload album failed", err);
-      toast.error(err?.response?.data?.message || "KhA'ng t���i lA�n �`�����c ���nh");
+      toast.error(err?.response?.data?.message || "Không tải lên được ảnh");
     } finally {
       setUploadingAlbum(false);
     }
@@ -772,7 +772,7 @@ const Profile = () => {
     })();
 
     if (!requesterId) {
-      toast.error("B���n cA7n �`��ng nh��-p �`��� g��-i yA�u cA7u");
+      toast.error("Bạn cần đăng nhập để gửi yêu cầu");
       navigate("/login");
       return;
     }
@@ -780,11 +780,11 @@ const Profile = () => {
     try {
       setAlbumRequesting(true);
       await requestAlbumAccess(user.id, requesterId);
-      toast.success("�?A� g��-i yA�u cA7u truy c��-p album");
+      toast.success("Đã gửi yêu cầu truy cập album");
       setAlbumAccessRequested(true);
     } catch (err: any) {
       console.error("Album access request failed", err);
-      toast.error(err?.response?.data?.message || "KhA'ng g��-i �`�����c yA�u cA7u");
+      toast.error(err?.response?.data?.message || "Không gửi được yêu cầu");
     } finally {
       setAlbumRequesting(false);
     }
@@ -1424,14 +1424,6 @@ const Profile = () => {
                     </p>
                     {!albumPhotos.length && (
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={albumLoading}
-                          onClick={() => refreshAlbumPhotos()}
-                        >
-                          Thử tải lại
-                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
