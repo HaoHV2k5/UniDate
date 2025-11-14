@@ -32,7 +32,7 @@ const Premium = () => {
       const url = await createVnpayPayment({
         userId,
         amount: Math.floor(amount),
-        orderInfo: note || "Nap tien vao vi admin",
+        orderInfo: note || "Nạp tiền vào ví admin",
         orderType: "billpayment",
         language: "vn",
         fullName: fullName || undefined,
@@ -61,7 +61,7 @@ const Premium = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount">S? ti?n (VND)</Label>
+                <Label htmlFor="amount">Số tiền (VND)</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -70,19 +70,19 @@ const Premium = () => {
                   value={amount}
                   readOnly
                   disabled
-                  placeholder="Nh?p s? ti?n"
+                  placeholder="Nhập số tiền"
                 />
               </div>
               <div>
-                <Label htmlFor="fullname">Họ tên (tuỳ chọn)</Label>
+                <Label htmlFor="fullname">Họ tên (tùy chọn)</Label>
                 <Input id="fullname" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nguyễn Văn A" />
               </div>
               <div>
-                <Label htmlFor="email">Email (tuỳ chọn)</Label>
+                <Label htmlFor="email">Email (tùy chọn)</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
               </div>
               <div>
-                <Label htmlFor="mobile">Số điện thoại (tuỳ chọn)</Label>
+                <Label htmlFor="mobile">Số điện thoại (tùy chọn)</Label>
                 <Input id="mobile" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="0901234567" />
               </div>
             </div>
