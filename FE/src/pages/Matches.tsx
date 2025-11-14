@@ -137,7 +137,7 @@ const MatchCard = ({
             />
             <div className="absolute -top-2 -right-2">
               <Badge variant="gradient" className="font-semibold text-xs px-2 py-1">
-                {user.match_score}%
+                {user.match_score}
               </Badge>
             </div>
           </div>

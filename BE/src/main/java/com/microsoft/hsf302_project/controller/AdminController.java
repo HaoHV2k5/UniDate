@@ -31,7 +31,7 @@ public class AdminController {
         return ApiResponse.<List<UserResponse>>builder().data(users).message("Lấy danh sách user thành công").build();
     }
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @GetMapping("/user{id}")
+    @GetMapping("/user/{id}")
     public ApiResponse<UserResponse> getUserByIdForAdmin(@PathVariable Long id) {
         UserResponse user = userService.getUserById(id);
         return ApiResponse.<UserResponse>builder().data(user).message("Lấy user thành công").build();
