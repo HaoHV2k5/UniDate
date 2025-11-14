@@ -8,7 +8,7 @@ import { createVnpayPayment } from "@/api/payment";
 import { toast } from "sonner";
 
 const Premium = () => {
-  const [amount, setAmount] = useState<number>(100000);
+  const amount = 100000;
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
@@ -32,7 +32,7 @@ const Premium = () => {
       const url = await createVnpayPayment({
         userId,
         amount: Math.floor(amount),
-        orderInfo: note || "Nap tien vao vi admin",
+        orderInfo: note || "Nạp tiền vào ví admin",
         orderType: "billpayment",
         language: "vn",
         fullName: fullName || undefined,
@@ -68,20 +68,21 @@ const Premium = () => {
                   min={1000}
                   step={1000}
                   value={amount}
-                  onChange={(e) => setAmount(parseInt(e.target.value || "0", 10))}
+                  readOnly
+                  disabled
                   placeholder="Nhập số tiền"
                 />
               </div>
               <div>
-                <Label htmlFor="fullname">Họ tên (tuỳ chọn)</Label>
+                <Label htmlFor="fullname">Họ tên (tùy chọn)</Label>
                 <Input id="fullname" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nguyễn Văn A" />
               </div>
               <div>
-                <Label htmlFor="email">Email (tuỳ chọn)</Label>
+                <Label htmlFor="email">Email (tùy chọn)</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
               </div>
               <div>
-                <Label htmlFor="mobile">Số điện thoại (tuỳ chọn)</Label>
+                <Label htmlFor="mobile">Số điện thoại (tùy chọn)</Label>
                 <Input id="mobile" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="0901234567" />
               </div>
             </div>
