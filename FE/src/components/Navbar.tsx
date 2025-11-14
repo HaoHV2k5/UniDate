@@ -109,14 +109,6 @@ export const Navbar = () => {
                 Lịch hẹn
               </Button>
             </Link>
-            <Link to="/premium">
-              <Button
-                variant={isActive("/premium") ? "default" : "ghost"}
-                size="sm"
-              >
-                Premium
-              </Button>
-            </Link>
             <Link to="/album">
               <Button
                 variant={isActive("/album") ? "default" : "ghost"}
@@ -194,10 +186,6 @@ export const Navbar = () => {
                   Trang cá nhân
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/premium">Nâng cấp/Premium</Link>
-              </DropdownMenuItem>
-
               {/* Chỉ hiển thị mục Quản trị nếu là admin */}
               {isAdmin && (
                 <DropdownMenuItem asChild>

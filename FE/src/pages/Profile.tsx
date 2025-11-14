@@ -1104,8 +1104,11 @@ const Profile = () => {
     refreshAlbumPhotos({ silent: true });
   }, [user?.id, isOwner, currentUser?.id, refreshAlbumPhotos]);
 
+  const userId = user?.id;
+  const isPrivateProfile = Boolean(user?.isPrivate);
+
   useEffect(() => {
-    if (!hasMore || loadingMore || !user || (user.isPrivate && !isOwner)) return;
+    if (!hasMore || loadingMore || !userId || (isPrivateProfile && !isOwner)) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -1122,7 +1125,7 @@ const Profile = () => {
 
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loadingMore, user, isOwner]);
+  }, [hasMore, loadingMore, userId, isPrivateProfile, isOwner]);
 
   // Loading skeleton
   if (loading && !user) {
