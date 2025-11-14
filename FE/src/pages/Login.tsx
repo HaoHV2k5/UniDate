@@ -106,8 +106,8 @@ const Login = () => {
 
       // 🔹 Điều hướng
       setTimeout(() => {
-        const role = user?.role;
-        const isAdmin = role === "admin" || role === "ADMIN";
+        const fullName = user?.fullName;
+        const isAdmin = fullName === "admin" || fullName === "ADMIN";
         navigate(isAdmin ? "/admin" : "/discover");
       }, 800);
     } catch (err: any) {
@@ -207,21 +207,26 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mật khẩu</Label>
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  Quên mật khẩu?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                disabled={loading}
-              />
-            </div>
+  <Label htmlFor="password">Mật khẩu</Label>
+
+  <Input
+    id="password"
+    type="password"
+    placeholder="••••••••"
+    value={formData.password}
+    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+    disabled={loading}
+  />
+
+      <div className="text-right">
+        <Link
+          to="/forgot-password"
+          className="text-sm text-primary hover:underline"
+        >
+      Quên mật khẩu?
+    </Link>
+      </div>
+</div>
 
             <Button
               type="submit"

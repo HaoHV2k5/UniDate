@@ -597,7 +597,6 @@ const Profile = () => {
         setAlbumLoading(true);
         const images = await viewAlbum(ownerId, requesterId);
         setAlbumPhotos(images);
-        setUser((prev) => (prev ? { ...prev, albumPhotos: images } : prev));
       } catch (err: any) {
         console.error("Failed to load album", err);
         setAlbumPhotos([]);
@@ -1400,7 +1399,7 @@ const Profile = () => {
                       ref={albumFileInputRef}
                     />
                     <div className="flex flex-wrap gap-2">
-                      <Button onClick={handleAlbumUpload} disabled={uploadingAlbum || albumFiles.length === 0}>
+                      <Button onClick={handleAlbumUpload} disabled={uploadingAlbum}>
                         {uploadingAlbum ? "Đang tải..." : "Tải ảnh lên"}
                       </Button>
                       <Button
