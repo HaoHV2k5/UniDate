@@ -13,9 +13,6 @@ import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
-import Premium from "./pages/Premium";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentFail from "./pages/PaymentFail";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import Album from "./pages/Album";
@@ -43,9 +40,6 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/album" element={<Album />} />
           <Route path="/album/requests" element={<AlbumRequests />} />
-          <Route path="/premium" element={<Premium />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/payment-fail" element={<PaymentFail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

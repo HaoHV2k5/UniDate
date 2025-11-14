@@ -400,6 +400,7 @@ public class UserService {
         List<User> usersWithLocation = userRepo.findAll().stream()
                 .filter(u -> u.getLatitude() != null && u.getLongitude() != null)
                 .filter(u -> !u.getId().equals(userId))
+                .filter(u -> !"ADMIN".equalsIgnoreCase(u.getRole()))
                 .toList();
 
         List<NearbyUserResponse> result = new ArrayList<>();
