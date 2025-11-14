@@ -8,7 +8,7 @@ import { createVnpayPayment } from "@/api/payment";
 import { toast } from "sonner";
 
 const Premium = () => {
-  const [amount, setAmount] = useState<number>(100000);
+  const amount = 100000;
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
@@ -61,15 +61,16 @@ const Premium = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount">Số tiền (VND)</Label>
+                <Label htmlFor="amount">S? ti?n (VND)</Label>
                 <Input
                   id="amount"
                   type="number"
                   min={1000}
                   step={1000}
                   value={amount}
-                  onChange={(e) => setAmount(parseInt(e.target.value || "0", 10))}
-                  placeholder="Nhập số tiền"
+                  readOnly
+                  disabled
+                  placeholder="Nh?p s? ti?n"
                 />
               </div>
               <div>
