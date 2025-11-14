@@ -64,7 +64,7 @@ public class PostController {
     // get dựa vào usr id
     // chỉ lấy nếu nó là visible và public
     @GetMapping("/user/{id}")
-    public ApiResponse<Page<PostResponse>> getPostByUser( @PathVariable Long userId,
+    public ApiResponse<Page<PostResponse>> getPostByUser( @PathVariable("id") Long userId,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "10") int size) {
 

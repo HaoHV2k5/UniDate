@@ -453,6 +453,8 @@ public class UserService {
 
     public List<UserResponse> searchByName(String name) {
         List<User> res = userRepo.findByFullNameContainingIgnoreCase(name);
+        User user = userRepo.findUserByRole("ADMIN");
+        res.remove(user);
         return res.stream().map(userMapper::toUserResponse).collect(Collectors.toList());
     }
 }
