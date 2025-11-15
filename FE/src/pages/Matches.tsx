@@ -135,11 +135,13 @@ const MatchCard = ({
                 (e.currentTarget as HTMLImageElement).src = "/default-avatar.png";
               }}
             />
-            <div className="absolute -top-2 -right-2">
-              <Badge variant="gradient" className="font-semibold text-xs px-2 py-1">
-                {user.match_score}
-              </Badge>
-            </div>
+            {user.match_score > 0 && (
+              <div className="absolute -top-2 -right-2">
+                <Badge variant="gradient" className="font-semibold text-xs px-2 py-1">
+                  {user.match_score}
+                </Badge>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 space-y-2">
